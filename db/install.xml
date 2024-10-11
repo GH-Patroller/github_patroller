@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMLDB PATH="mod/pluginpatroller/db" VERSION="2023051401" COMMENT="Estructura de la base de datos para el plugin patroller">
+    <TABLES>
+        <TABLE NAME="pluginpatroller" COMMENT="Tabla principal para el plugin patroller">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="ID único"/>
+                <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Nombre del plugin"/>
+				<FIELD NAME="owner" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Owner del Repo"/>
+				<FIELD NAME="repo" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Nombre del Repo"/>
+                <FIELD NAME="intro" TYPE="text" NOTNULL="false" COMMENT="Introducción"/>
+                <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Formato de introducción"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de creación"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de modificación"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
+            </KEYS>
+        </TABLE>
+        <TABLE NAME="patrollerprueba" COMMENT="Tabla auxiliar para el plugin patroller">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="ID único"/>
+                <FIELD NAME="otrocampo" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Campo adicional"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</XMLDB>
