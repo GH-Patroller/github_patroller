@@ -21,14 +21,6 @@ class mod_pluginpatroller_mod_form extends moodleform_mod {
             $mform->setType('name', PARAM_CLEANHTML);
         }
 
-        $mform->addElement('text', 'owner', get_string('owner', 'pluginpatroller'), array('size'=>'64'));
-        $mform->setType('owner', PARAM_TEXT);
-        $mform->addRule('owner', null, 'required', null, 'client');
-
-        $mform->addElement('text', 'repo', get_string('repo', 'pluginpatroller'), array('size'=>'64'));
-        $mform->setType('repo', PARAM_TEXT);
-        $mform->addRule('repo', null, 'required', null, 'client');
-
         // Añadir campo de subida de archivos
         $mform->addElement('filepicker', 'myfile', get_string('uploadfile', 'mod_myplugin'), null, 
             array('accepted_types' => array('.csv', '.xls', '.xlsx'))); // Solo archivos CSV, XLS, y XLSX
@@ -43,15 +35,6 @@ class mod_pluginpatroller_mod_form extends moodleform_mod {
         $this->add_action_buttons();
     }
 
-    function data_preprocessing(&$default_values) {
-        // Preprocess the "owner" and "repo" fields
-        if (isset($default_values['owner'])) {
-            $default_values['owner'] = $default_values['owner'];
-        }
-        if (isset($default_values['repo'])) {
-            $default_values['repo'] = $default_values['repo'];
-        }
-    }
 
 }
 
