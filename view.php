@@ -1,13 +1,12 @@
 <?php
-
 require_once('../../config.php');
-require_once('lib.php');
-require_once('mod_form.php');
+require_once($CFG->libdir.'/filelib.php');
+require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 
-// Set necessary parameters
-$id = required_param('id', PARAM_INT); // Course module ID
+$id = required_param('id', PARAM_INT); // ID del módulo de curso.
 
 if ($id) {
+    // Obtener el módulo del curso (cm), el curso, y la instancia del plugin
     $cm = get_coursemodule_from_id('pluginpatroller', $id, 0, false, MUST_EXIST);
     $course = get_course($cm->course);
     $pluginpatroller = $DB->get_record('pluginpatroller', array('id' => $cm->instance), '*', MUST_EXIST);
@@ -15,110 +14,56 @@ if ($id) {
     print_error('Course module ID is required.');
 }
 
-require_login($course, true, $cm);
+require_login($course, true, $cm); // Verificar que el usuario está logueado y tiene acceso a la actividad
 
-$PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id));
-$PAGE->set_title(format_string($pluginpatroller->name));
-$PAGE->set_heading(format_string($course->fullname));
-echo $OUTPUT->header();
+$context = context_module::instance($cm->id); // Obtener el contexto de la actividad
+$PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id)); // Establecer la URL de la página
+$PAGE->set_title(format_string($pluginpatroller->name)); // Título de la página
+$PAGE->set_heading(format_string($course->fullname)); // Título de la cabecera
+
+echo $OUTPUT->header(); // Mostrar el encabezado de la página
 
 // Fetch the GitHub token from plugin settings in the database
-$token = get_config('pluginpatroller', 'github_token');
+$token = get_config('pluginpatroller', 'token_patroller');
+$owner = get_config('pluginpatroller', 'owner_patroller');
 
-// Get owner and repo from the database (values stored in $pluginpatroller)
-$owner = $pluginpatroller->owner;  // Obtenemos el valor 'owner' de la base de datos
-$repo = $pluginpatroller->repo;    // Obtenemos el valor 'repo' de la base de datos
+echo $token."<br/>";
+echo $owner."<br/>";
+echo "<hr/>";
 
-// BEGIN GitHub API Script
+$name = $pluginpatroller->name;  
 
-// URL to get the collaborators from the GitHub API
-$url = "https://api.github.com/repos/$owner/$repo/collaborators";
 
-// Initialize cURL session
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Authorization: token ' . $token,
-    'User-Agent: GitHub-API-Request'
-]);
+echo $name."<br/>";
 
-// Execute the cURL request
-$response = curl_exec($ch);
 
-if (curl_errno($ch)) {
-    echo 'Error: ' . curl_error($ch) . "<br>";
-} else {
-    $data = json_decode($response, true);
-    if (isset($data['message'])) {
-        echo "Error: " . $data['message'] . "<br>";
-    } else {
-        foreach ($data as $collaborator) {
-            echo "Colaborador: " . $collaborator['login'] . "<br>";
-            echo "URL: " . $collaborator['html_url'] . "<br>";
+// Código para mostrar los archivos subidos y sus detalles
+$fs = get_file_storage();
+$files = $fs->get_area_files($context->id, 'mod_pluginpatroller', 'uploadedfiles', false, 'itemid, filepath, filename', false);
 
-            $commits_url = "https://api.github.com/repos/$owner/$repo/commits";
-            $ch_commits = curl_init();
-            curl_setopt($ch_commits, CURLOPT_URL, $commits_url);
-            curl_setopt($ch_commits, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch_commits, CURLOPT_HTTPHEADER, [
-                'Authorization: token ' . $token,
-                'User-Agent: GitHub-API-Request'
-            ]);
+// Verificar si hay archivos subidos
+if (count($files) > 0) {
+    foreach ($files as $file) {
+        if (!$file->is_directory()) {
+            // Mostrar detalles del archivo
+            $filename = $file->get_filename();
+            $filesize = $file->get_filesize();
 
-            // Execute the cURL request for commits
-            $commits_response = curl_exec($ch_commits);
-            $commits_data = json_decode($commits_response, true);
+            // Generar la URL del archivo usando el contextid dinámico
+            $fileurl = moodle_url::make_pluginfile_url($context->id, 'mod_pluginpatroller', 'uploadedfiles', 0, $file->get_filepath(), $file->get_filename());
 
-            if (curl_errno($ch_commits)) {
-                echo 'Error al obtener los commits: ' . curl_error($ch_commits) . "<br>";
-            } else {
-                $num_commits = count($commits_data);
-                echo "Número de commits: " . $num_commits . "<br>";
-
-                $total_added = 0;
-                $total_deleted = 0;
-                $total_modified = 0;
-
-                foreach ($commits_data as $commit) {
-                    $commit_detail_url = "https://api.github.com/repos/$owner/$repo/commits/" . $commit['sha'];
-                    $ch_commit_detail = curl_init();
-                    curl_setopt($ch_commit_detail, CURLOPT_URL, $commit_detail_url);
-                    curl_setopt($ch_commit_detail, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch_commit_detail, CURLOPT_HTTPHEADER, [
-                        'Authorization: token ' . $token,
-                        'User-Agent: GitHub-API-Request'
-                    ]);
-
-                    $commit_detail_response = curl_exec($ch_commit_detail);
-
-                    if (curl_errno($ch_commit_detail)) {
-                        echo 'Error al obtener detalles del commit: ' . curl_error($ch_commit_detail) . "<br>";
-                    } else {
-                        $commit_detail_data = json_decode($commit_detail_response, true);
-
-                        if (isset($commit_detail_data['stats'])) {
-                            $total_added += $commit_detail_data['stats']['additions'];
-                            $total_deleted += $commit_detail_data['stats']['deletions'];
-                            $total_modified += $commit_detail_data['stats']['total'];
-                        }
-                    }
-                    curl_close($ch_commit_detail);
-                }
-
-                echo "Líneas agregadas: " . $total_added . "<br>";
-                echo "Líneas eliminadas: " . $total_deleted . "<br>";
-                echo "Líneas modificadas: " . $total_modified . "<br>";
-            }
-
-            curl_close($ch_commits);
-            echo "-------------------------------" . "<br>";
+            // Mostrar el nombre del archivo, su tamaño y el enlace de descarga
+            echo "Archivo subido: <a href='{$fileurl}'>{$filename}</a><br>";
+            echo "Tamaño del archivo: " . display_size($filesize) . "<br>";
+            echo "URL del archivo: <a href='{$fileurl}'>{$fileurl}</a><br>";
+			echo "<hr/>";
+			echo "<pre>";
+			echo $file;
+			echo "</pre>";
         }
     }
+} else {
+    echo "No hay ningún archivo subido aún.";
 }
-curl_close($ch);
 
-// END GitHub API Script
-
-echo $OUTPUT->footer();
-?>
+echo $OUTPUT->footer(); // Mostrar el pie de página de Moodle
