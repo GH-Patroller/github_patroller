@@ -10,7 +10,7 @@ if ($ADMIN->fulltree) {
         'pluginpatroller/token_patroller',
         get_string('tokenpatroller', 'pluginpatroller'),
         get_string('tokenpatroller_desc', 'pluginpatroller'),
-        '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', // Valor por defecto
+        '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', // Valor por defecto
         PARAM_TEXT
     ));
 
@@ -19,7 +19,7 @@ if ($ADMIN->fulltree) {
         'pluginpatroller/owner_patroller',
         get_string('ownerpatroller', 'pluginpatroller'),
         get_string('ownerpatroller_desc', 'pluginpatroller'),
-        '', // Valor por defecto
+        'GH-Patroller', // Valor por defecto
         PARAM_TEXT
     ));
 }

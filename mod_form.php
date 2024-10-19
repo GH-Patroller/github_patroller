@@ -21,11 +21,6 @@ class mod_pluginpatroller_mod_form extends moodleform_mod {
             $mform->setType('name', PARAM_CLEANHTML);
         }
 
-        // Añadir campo de subida de archivos
-        $mform->addElement('filepicker', 'myfile', get_string('uploadfile', 'mod_myplugin'), null, 
-            array('accepted_types' => array('.csv', '.xls', '.xlsx'))); // Solo archivos CSV, XLS, y XLSX
-        $mform->addRule('myfile', null, 'required', null, 'client'); // Regla de campo requerido
-        $mform->setType('myfile', PARAM_FILE); // Sobrescribir archivo anterior
 
         // Estándar de Moodle para elementos de curso
         $this->standard_intro_elements();
@@ -35,7 +30,12 @@ class mod_pluginpatroller_mod_form extends moodleform_mod {
         $this->add_action_buttons();
     }
 
-
+	//FUNCION QUE SETEA LOS DATOS ANTES DE MOSTRAR EL FORM
+	/*
+	function data_preprocessing(&$default_values) {
+		// N/A
+	}
+	*/
 }
 
 ?>
