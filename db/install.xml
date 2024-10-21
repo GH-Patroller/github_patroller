@@ -12,6 +12,7 @@
                 <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de modificación"/>
                 <!-- Datos de Bot Instancia -->
                 <FIELD NAME="apimodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="última actualización del API"/>
+				<FIELD NAME="execution_interval" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" COMMENT="Intervalo de ejecución en minutos"/>
 
             </FIELDS>
             <KEYS>
