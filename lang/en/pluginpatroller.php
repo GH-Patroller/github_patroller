@@ -10,10 +10,15 @@ $string['pluginpatroller'] = 'pluginpatroller';
 $string['pluginadministration'] = 'pluginpatroller administration';
 
 $string['patrollerheader'] = 'Patroller Config';
+$string['name'] = 'Nombre';
+$string['execution_interval'] = 'intervalo (Min)';
+$string['tokenpatroller'] = 'Token Github';
+$string['tokenpatroller_desc'] = 'Token Github del Bot';
+$string['ownerpatroller'] = 'Owner Github';
+$string['ownerpatroller_desc'] = 'Nombre de usuario Github del Bot';
 
 /*
 $string['exammode'] = 'Modo Examen';
-$string['name'] = 'Nombre';
 $string['exammode_desc'] = 'Activar modo examen';
 $string['startdate'] = 'Fecha de inicio del examen';
 $string['enddate'] = 'Fecha de fin del examen';
