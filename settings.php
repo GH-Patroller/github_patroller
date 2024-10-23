@@ -10,7 +10,7 @@ if ($ADMIN->fulltree) {
         'pluginpatroller/token_patroller',
         get_string('tokenpatroller', 'pluginpatroller'),
         get_string('tokenpatroller_desc', 'pluginpatroller'),
-        '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', // Valor por defecto
+        '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', // Valor por defecto
         PARAM_TEXT
     ));
 
