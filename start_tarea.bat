@@ -1,0 +1,1 @@
+schtasks /create /tn "TareaPluginPatroller" /tr "curl -s http://127.0.0.1/mod/pluginpatroller/tareaprogramada.php" /sc minute /mo 1
