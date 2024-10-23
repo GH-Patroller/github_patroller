@@ -4,6 +4,7 @@ require_once('../../config.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 
 
+
 global $DB, $OUTPUT, $PAGE; 
 
 $PAGE->requires->css('/mod/pluginpatroller/css/style.css');
@@ -43,7 +44,7 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
-        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'crearrepositorios.php?id='.$id.'\'">Crear Repositorios</button>';   
+        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id='.$id.'\'">Crear Repositorios</button>';   
         mostrar_configuraciones();
         break;
     case 'tab2':
