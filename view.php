@@ -4,7 +4,6 @@ require_once('../../config.php');
 require_once($CFG->libdir . '/tablelib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
-require(__DIR__ . '\classes\tasks\commit_retriever_task.php');
 global $DB, $OUTPUT, $PAGE;
 $PAGE->requires->css('/mod/pluginpatroller/style.css');
 
@@ -29,9 +28,6 @@ $PAGE->set_title(format_string($pluginpatroller->name));
 $PAGE->set_heading(format_string($course->fullname));
 
 echo $OUTPUT->header();
-
-$commit_retriever_task = new commit_retriever_task();
-echo '<pre>', print_r($commit_retriever_task->execute('PR3-2024-2C-D-G1')), '</pre>';
 
 // Definir las pestañas
 $tabrows = array();

@@ -3,21 +3,13 @@
 class commit_retriever_task
 {
     public function __construct() {}
-    // public function get_name()
-    // {
-    //     return get_string('repo_retriever_task', 'mod_pluginpatroller');
-    // }
 
     public function execute($repo = '')
     {
         global $DB;
 
-        // $data = $this->get_custom_data();
-        // $course_id = $data->course_id;
-        // $installation_id = $data->installation_id;
-
         // Fetch the GitHub token from plugin settings in the database
-        $token = get_config('pluginpatroller', 'github_token');
+        $token = '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';
         // Get owner and repo from the database (values stored in $pluginpatroller)
         $owner = 'GHPatroller';  // Obtenemos el valor 'owner' de la base de datos
 
