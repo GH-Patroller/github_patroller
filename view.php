@@ -23,6 +23,7 @@ if ($id) {
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
+$context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
 $PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($pluginpatroller->name));
 $PAGE->set_heading(format_string($course->fullname));
@@ -34,10 +35,10 @@ echo '<pre>', print_r($commit_retriever_task->execute('PR3-2024-2C-D-G1')), '</p
 
 // Definir las pestañas
 $tabrows = array();
-$tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Crear Repositorios');
+$tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Configuraciones');
 $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Inscritos');
 $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Contributors Insights');
-$tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), 'Configuraciones');
+
 
 print_tabs(array($tabrows), optional_param('tab', 'tab1', PARAM_TEXT));
 
@@ -47,16 +48,14 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
-        crear_repositorios();
+        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
+        mostrar_configuraciones();
         break;
     case 'tab2':
         mostrar_alumnos_inscritos($context); // Asegúrate de pasar el contexto correctamente
         break;
     case 'tab3':
         mostrar_contributors_insights();
-        break;
-    case 'tab4':
-        mostrar_configuraciones();
         break;
     default:
         echo "<p>Pestaña desconocida.</p>";
