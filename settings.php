@@ -19,7 +19,7 @@ if ($ADMIN->fulltree) {
         'pluginpatroller/owner_patroller',
         get_string('ownerpatroller', 'pluginpatroller'),
         get_string('ownerpatroller_desc', 'pluginpatroller'),
-        '', // Valor por defecto
+        'GH-Patroller', // Valor por defecto
         PARAM_TEXT
     ));
 }

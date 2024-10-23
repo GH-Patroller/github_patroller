@@ -23,6 +23,13 @@ class mod_pluginpatroller_mod_form extends moodleform_mod
             $mform->setType('name', PARAM_CLEANHTML);
         }
 
+        $mform->addElement('text', 'execution_interval', get_string('execution_interval', 'pluginpatroller'));
+        $mform->setType('execution_interval', PARAM_INT);
+        $mform->setDefault('execution_interval', 60); // Valor por defecto de 60 minutos
+        $mform->addRule('execution_interval', null, 'required', null, 'client');
+
+
+
         // Estándar de Moodle para elementos de curso
         $this->standard_intro_elements();
         $this->standard_coursemodule_elements();
@@ -30,4 +37,11 @@ class mod_pluginpatroller_mod_form extends moodleform_mod
         // Botones de acción para guardar/cancelar
         $this->add_action_buttons();
     }
+
+    //FUNCION QUE SETEA LOS DATOS ANTES DE MOSTRAR EL FORM
+    /*
+	function data_preprocessing(&$default_values) {
+		// N/A
+	}
+	*/
 }
