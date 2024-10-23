@@ -4,9 +4,11 @@ require_once('../../config.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 
 
+
+global $DB, $OUTPUT, $PAGE; 
 global $DB, $OUTPUT, $PAGE; 
 
-$PAGE->requires->css('/mod/pluginpatroller/style.css');
+$PAGE->requires->css('/mod/pluginpatroller/css/style.css');
 // Configurar la página
 $id = required_param('id', PARAM_INT);
 
@@ -22,6 +24,7 @@ if ($id) {
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
+$context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
 $PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($pluginpatroller->name));
 $PAGE->set_heading(format_string($course->fullname));
@@ -30,10 +33,10 @@ echo $OUTPUT->header();
 
 // Definir las pestañas
 $tabrows = array();
-$tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Crear Repositorios');
+$tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Configuraciones');
 $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Inscritos');
 $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Contributors Insights');
-$tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), 'Configuraciones');
+
 
 print_tabs(array($tabrows), optional_param('tab', 'tab1', PARAM_TEXT));
 
@@ -43,7 +46,8 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
-        crear_repositorios();
+        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id='.$id.'\'">Crear Repositorios</button>';   
+        mostrar_configuraciones();
         break;
     case 'tab2':
         mostrar_alumnos_inscritos($context); // Asegúrate de pasar el contexto correctamente
@@ -51,32 +55,11 @@ switch ($tab) {
     case 'tab3':
         mostrar_contributors_insights();
         break;
-    case 'tab4':
-        mostrar_configuraciones();
-        break;
     default:
         echo "<p>Pestaña desconocida.</p>";
 }
 
 echo "<hr>";
-
-function crear_repositorios() {
-    global $course; // Usa global para acceder a la variable $course
-    echo "<h2>Crear Repositorios</h2>";
-
-    echo "<br>Nombre de Materia: " . $course->shortname;
-    echo "<br>Año: " . date("Y");
-    echo "<br>Cuatrimestre: ";
-    echo "<select name='cuatrimestre'>";
-    echo "<option value='11'>1er Año - 1er Cuatrimestre (1º1º)</option>";
-    echo "<option value='12'>1er Año - 2do Cuatrimestre (1º2º)</option>";
-    echo "<option value='21'>2do Año - 1er Cuatrimestre (2º1º)</option>";
-    echo "<option value='22'>2do Año - 2do Cuatrimestre (2º2º)</option>";
-    echo "</select>";
-    echo "<br>Sede:";
-    echo "<br>Curso:";
-    echo "<br>Grupos:";
-}
 
 function mostrar_alumnos_inscritos($context) {
     global $DB; // Asegúrate de tener acceso global al DB si es necesario

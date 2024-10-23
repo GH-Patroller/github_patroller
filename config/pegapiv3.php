@@ -1,5 +1,8 @@
 <?php
 
+require_once('../../../config.php');
+
+
 // Fetch the GitHub token from plugin settings in the database
 $token = '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';
 
