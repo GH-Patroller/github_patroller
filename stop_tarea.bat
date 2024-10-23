@@ -1,1 +1,0 @@
-schtasks /delete /tn "TareaPluginPatroller" /f 
