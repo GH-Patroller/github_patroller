@@ -6,6 +6,7 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 
 global $DB, $OUTPUT, $PAGE; 
+global $DB, $OUTPUT, $PAGE; 
 
 $PAGE->requires->css('/mod/pluginpatroller/css/style.css');
 // Configurar la página
@@ -22,6 +23,7 @@ if ($id) {
 
 require_login($course, true, $cm);
 
+$context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
 $context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
 $PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($pluginpatroller->name));
