@@ -1,14 +1,12 @@
 <?php
 
 require_once('../../config.php');
+require_once($CFG->libdir . '/tablelib.php');
+require_once($CFG->libdir . '/filelib.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
+global $DB, $OUTPUT, $PAGE;
+$PAGE->requires->css('/mod/pluginpatroller/style.css');
 
-
-
-global $DB, $OUTPUT, $PAGE; 
-global $DB, $OUTPUT, $PAGE; 
-
-$PAGE->requires->css('/mod/pluginpatroller/css/style.css');
 // Configurar la página
 $id = required_param('id', PARAM_INT);
 
@@ -46,7 +44,7 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
-        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id='.$id.'\'">Crear Repositorios</button>';   
+        echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
         mostrar_configuraciones();
         break;
     case 'tab2':
@@ -61,7 +59,27 @@ switch ($tab) {
 
 echo "<hr>";
 
-function mostrar_alumnos_inscritos($context) {
+function crear_repositorios()
+{
+    global $course; // Usa global para acceder a la variable $course
+    echo "<h2>Crear Repositorios</h2>";
+
+    echo "<br>Nombre de Materia: " . $course->shortname;
+    echo "<br>Año: " . date("Y");
+    echo "<br>Cuatrimestre: ";
+    echo "<select name='cuatrimestre'>";
+    echo "<option value='11'>1er Año - 1er Cuatrimestre (1º1º)</option>";
+    echo "<option value='12'>1er Año - 2do Cuatrimestre (1º2º)</option>";
+    echo "<option value='21'>2do Año - 1er Cuatrimestre (2º1º)</option>";
+    echo "<option value='22'>2do Año - 2do Cuatrimestre (2º2º)</option>";
+    echo "</select>";
+    echo "<br>Sede:";
+    echo "<br>Curso:";
+    echo "<br>Grupos:";
+}
+
+function mostrar_alumnos_inscritos($context)
+{
     global $DB; // Asegúrate de tener acceso global al DB si es necesario
     $enrolled_users = get_enrolled_users($context);
 
@@ -124,7 +142,8 @@ function mostrar_alumnos_inscritos($context) {
     echo '</table>';
 }
 
-function mostrar_contributors_insights() {
+function mostrar_contributors_insights()
+{
     global $DB; // Asegúrate de tener acceso global al DB
     // Mostrar los datos de la tabla data_patroller
     echo "<h2>Datos de Alumnos </h2>";
@@ -147,7 +166,8 @@ function mostrar_contributors_insights() {
     }
 }
 
-function mostrar_configuraciones() {
+function mostrar_configuraciones()
+{
     global $DB; // Asegúrate de tener acceso global al DB
     echo "<h2>Datos de Config Patroller</h2>";
 
@@ -174,5 +194,3 @@ function mostrar_configuraciones() {
 }
 
 echo $OUTPUT->footer();
-
-?>
