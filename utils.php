@@ -17,7 +17,6 @@ require_once('../../config.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 
 defined('MOODLE_INTERNAL') || die();
-global $DB, $OUTPUT, $PAGE;
 
 
 function crear_repositorios()
@@ -107,24 +106,43 @@ function mostrar_contributors_insights()
 {
     global $DB; // Asegúrate de tener acceso global al DB
     // Mostrar los datos de la tabla data_patroller
+    // Comenzar la tabla
+    //DATOS MOCKEADOS (REEMPLAZAR CON UNA LLAMADA A LA TABLA REPOSITORIOS)
+    $repositories = ['github_patroller'];
     echo "<h2>Datos de Alumnos </h2>";
-    $data_patroller_records = $DB->get_records('data_patroller');
-    foreach ($data_patroller_records as $record) {
-        echo "<p>ID: {$record->id}</p>";
-        echo "<p>Sede: {$record->sede}</p>";
-        echo "<p>Curso: {$record->curso}</p>";
-        echo "<p>Grupo: {$record->num_grupo}</p>";
-        echo "<p>Nombre del Repositorio: {$record->nombre_repo}</p>";
-        echo "<p>Nombre del Alumno: {$record->nombre_alumno}</p>";
-        echo "<p>Correo del Alumno: {$record->mail_alumno}</p>";
-        echo "<p>Usuario GitHub del Alumno: {$record->alumno_github}</p>";
-        echo "<p>Cantidad de Commits: {$record->cantidad_commits}</p>";
-        echo "<p>Líneas Agregadas: {$record->lineas_agregadas}</p>";
-        echo "<p>Líneas Eliminadas: {$record->lineas_eliminadas}</p>";
-        echo "<p>Líneas Modificadas: {$record->lineas_modificadas}</p>";
-        echo "<p>Fecha Último Commit: " . date('d-m-Y H:i:s', $record->fecha_ultimo_commit) . "</p>";
-        echo "<hr>";
+
+    echo '<table class="generaltable">';
+    echo '<thead>';
+    echo '<tr class="headerrow">';
+    echo '<th>Usuario de Github</th>';
+    echo '<th>Nombre Completo</th>';
+    echo '<th>Fecha del Ultimo commit</th>';
+    echo '<th>Cantidad de commits</th>';
+    echo '<th>Líneas Agregadas</th>';
+    echo '<th>Líneas eliminadas</th>';
+    echo '<th>Líneas modificadas</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    foreach ($repositories as $repository) {
+        $student_commits = get_all_commit_information_by_repo($repository);
+        foreach ($student_commits as $student) {
+            echo '<tr>';
+            echo '<td>' . $student['commiter_github'] . '</td>';
+            echo '<td>' . '' . '</td>';
+            echo '<td>' . '01/01/1970' . '</td>';
+            echo '<td>' . $student['total_commits'] . '</td>';
+            echo '<td>' . $student['total_added'] . '</td>';
+            echo '<td>' . $student['total_deleted'] . '</td>';
+            echo '<td>' . $student['total_modified'] . '</td>';
+            echo '</tr>';
+        }
     }
+    // Cerrar la tabla
+    echo '</tbody>';
+    echo '</table>';
+    echo "<hr>";
 }
 
 function mostrar_configuraciones()
@@ -159,7 +177,6 @@ function get_all_commit_information_by_repo($repo = '')
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
     $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
-
     // BEGIN GitHub API Script
 
     //Establish date for commit retrieval
@@ -190,7 +207,7 @@ function get_all_commit_information_by_repo($repo = '')
         echo 'Error al obtener commits: ' . curl_error($ch_commits) . "<br>";
     } else {
         //Crear variables para organizacion de datos
-        $commit_data_array = ["total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
+        $commit_data_array = ["commiter_github" => "", "total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
         // Decodificar la respuesta JSON
         $commits_data = json_decode($commits_response, true);
 
@@ -198,6 +215,7 @@ function get_all_commit_information_by_repo($repo = '')
             $commiter_name = $commit['author']['login'];
             if (!array_key_exists($commiter_name, $commiter_array)) {
                 $commiter_array[$commiter_name] = $commit_data_array;
+                $commiter_array[$commiter_name]["commiter_github"] = $commiter_name;
             }
 
 
@@ -224,6 +242,7 @@ function get_all_commit_information_by_repo($repo = '')
                     $commiter_array[$commiter_name]['total_modified'] += $commit_detail_data['stats']['total'];
                 }
             }
+
             curl_close($ch_commit_detail);
         }
 
