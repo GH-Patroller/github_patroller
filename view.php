@@ -32,9 +32,9 @@ echo $OUTPUT->header();
 
 // Definir las pestañas
 $tabrows = array();
-$tabrows[] = new tabobject('Commits', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Configuraciones');
-$tabrows[] = new tabobject('Configuration', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Configuraciones');
-$tabrows[] = new tabobject('Students', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Inscritos');
+$tabrows[] = new tabobject('Commits', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Commits');
+$tabrows[] = new tabobject('Configuration', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Configuration');
+$tabrows[] = new tabobject('Students', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Students');
 
 
 print_tabs(array($tabrows), optional_param('tab', 'tab1', PARAM_TEXT));
@@ -44,15 +44,15 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 
 // Contenido según la pestaña activa
 switch ($tab) {
-    case 'Configuration':
+    case 'tab1':
+        mostrar_contributors_insights();
+        break;
+    case 'tab2':
         echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
         mostrar_configuraciones();
         break;
-    case 'Students':
+    case 'tab3':
         mostrar_alumnos_inscritos($context); // Asegúrate de pasar el contexto correctamente
-        break;
-    case 'Commits':
-        mostrar_contributors_insights();
         break;
     default:
         echo "<p>Pestaña desconocida.</p>";

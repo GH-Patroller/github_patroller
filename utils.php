@@ -131,7 +131,7 @@ function mostrar_contributors_insights()
             echo '<tr>';
             echo '<td>' . $student['commiter_github'] . '</td>';
             echo '<td>' . '' . '</td>';
-            echo '<td>' . '01/01/1970' . '</td>';
+            echo '<td>' . $student['last_commit'] . '</td>';
             echo '<td>' . $student['total_commits'] . '</td>';
             echo '<td>' . $student['total_added'] . '</td>';
             echo '<td>' . $student['total_deleted'] . '</td>';
@@ -183,7 +183,7 @@ function get_all_commit_information_by_repo($repo = '')
     $date = date('Y-m-d');
 
     // URL de la API de GitHub para obtener commits por repositorio
-    $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo . '+author-date:<=' . $date;
+    $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo . '+author-date:<=' . $date . '+sort:author-date-desc';
 
     // Iniciar cURL
     $ch_commits = curl_init($commits_url);
@@ -207,7 +207,7 @@ function get_all_commit_information_by_repo($repo = '')
         echo 'Error al obtener commits: ' . curl_error($ch_commits) . "<br>";
     } else {
         //Crear variables para organizacion de datos
-        $commit_data_array = ["commiter_github" => "", "total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
+        $commit_data_array = ["commiter_github" => "", "last_commit" => "", "total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
         // Decodificar la respuesta JSON
         $commits_data = json_decode($commits_response, true);
 
@@ -216,6 +216,7 @@ function get_all_commit_information_by_repo($repo = '')
             if (!array_key_exists($commiter_name, $commiter_array)) {
                 $commiter_array[$commiter_name] = $commit_data_array;
                 $commiter_array[$commiter_name]["commiter_github"] = $commiter_name;
+                $commiter_array[$commiter_name]["last_commit"] = explode("T", $commit["commit"]["author"]["date"])[0];
             }
 
 
