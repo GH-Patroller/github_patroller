@@ -5,8 +5,11 @@ require_once($CFG->libdir . '/tablelib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 require_once(__DIR__ . '/utils.php');
-global $DB, $OUTPUT, $PAGE;
+require_once('vistas/alumnosinscritos.php');
+
 $PAGE->requires->css('/mod/pluginpatroller/style.css');
+
+global $DB, $OUTPUT, $PAGE;
 
 // Configurar la página
 $id = required_param('id', PARAM_INT);
@@ -23,7 +26,6 @@ if ($id) {
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
-$context = context_module::instance($cm->id); // Asegúrate de que el contexto se obtiene correctamente
 $PAGE->set_url('/mod/pluginpatroller/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($pluginpatroller->name));
 $PAGE->set_heading(format_string($course->fullname));
@@ -32,8 +34,8 @@ echo $OUTPUT->header();
 
 // Definir las pestañas
 $tabrows = array();
-$tabrows[] = new tabobject('Commits', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Commits');
-$tabrows[] = new tabobject('Configuration', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Configuration');
+$tabrows[] = new tabobject('Commits', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Configuración');
+$tabrows[] = new tabobject('Configuration', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Commits');
 $tabrows[] = new tabobject('Students', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Students');
 
 
@@ -50,6 +52,9 @@ switch ($tab) {
     case 'tab2':
         echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
         mostrar_configuraciones();
+        break;
+    case 'tab2':
+        mostrar_contributors_insights();
         break;
     case 'tab3':
         mostrar_alumnos_inscritos($context); // Asegúrate de pasar el contexto correctamente
