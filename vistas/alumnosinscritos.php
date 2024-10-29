@@ -3,8 +3,8 @@
 function mostrar_alumnos_inscritos($context) {
     global $DB;
 
-    // Verificar si ya hay datos en la tabla alumnos_data_patroller
-    $hay_datos = $DB->record_exists('alumnos_data_patroller', array());
+    // Verificar si ya hay datos en la tabla data_patroller
+    $hay_datos = $DB->record_exists('data_patroller', array());
 
 
 
@@ -23,12 +23,12 @@ function mostrar_alumnos_inscritos($context) {
             $data = new stdClass();
             $data->nombre_alumno = $user->firstname . ' ' . $user->lastname;
             $data->mail_alumno = $user->email;
-            $DB->insert_record('alumnos_data_patroller', $data);
+            $DB->insert_record('data_patroller', $data);
         }
 
         // Redirigir para evitar múltiples envíos del formulario al recargar la página
        
-        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')));
+        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')));
     }
 
     // Mostrar la tabla de alumnos inscritos
@@ -43,8 +43,8 @@ function mostrar_alumnos_inscritos($context) {
     echo '</thead>';
     echo '<tbody>';
     
-    // Recuperar los registros de la tabla alumnos_data_patroller
-    $alumnos = $DB->get_records('alumnos_data_patroller');
+    // Recuperar los registros de la tabla data_patroller
+    $alumnos = $DB->get_records('data_patroller');
 
     if ($alumnos) {
         foreach ($alumnos as $alumno) {
