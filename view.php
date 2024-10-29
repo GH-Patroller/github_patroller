@@ -47,6 +47,9 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
+        mostrar_contributors_insights();
+        break;
+    case 'tab2':
         echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
         mostrar_configuraciones();
         break;
