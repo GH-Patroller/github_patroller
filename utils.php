@@ -102,15 +102,24 @@ function mostrar_alumnos_inscritos($context)
     echo '</table>';
 }
 
+
+
 function mostrar_contributors_insights()
 {
     global $DB; // Asegúrate de tener acceso global al DB
     // Mostrar los datos de la tabla data_patroller
     // Comenzar la tabla
-    //DATOS MOCKEADOS (REEMPLAZAR CON UNA LLAMADA A LA TABLA REPOSITORIOS)
-    $repositories = ['github_patroller'];
-    echo "<h2>Datos de Alumnos </h2>";
-
+    $student_commits = [];
+    $repositories = get_all_repositories();
+    echo '<div>';
+    echo 'Repositorio: <select name="repositories" id="repositories" onchange="{' . $student_commits = get_all_repositories() . '}">';
+    echo '<option disabled selected value> -- select a repository -- </option>';
+    foreach ($repositories as $repository) {
+        echo '<option value="' . $repository . '">' . $repository . '</option>';
+    }
+    echo '</select>';
+    echo '</div>';
+    echo print_r($student_commits);
     echo '<table class="generaltable">';
     echo '<thead>';
     echo '<tr class="headerrow">';
@@ -125,25 +134,29 @@ function mostrar_contributors_insights()
     echo '</thead>';
     echo '<tbody>';
 
-    foreach ($repositories as $repository) {
-        $student_commits = get_all_commit_information_by_repo($repository);
-        foreach ($student_commits as $student) {
-            echo '<tr>';
-            echo '<td>' . $student['commiter_github'] . '</td>';
-            echo '<td>' . '' . '</td>';
-            echo '<td>' . $student['last_commit'] . '</td>';
-            echo '<td>' . $student['total_commits'] . '</td>';
-            echo '<td>' . $student['total_added'] . '</td>';
-            echo '<td>' . $student['total_deleted'] . '</td>';
-            echo '<td>' . $student['total_modified'] . '</td>';
-            echo '</tr>';
-        }
+    foreach ($student_commits as $student) {
+        echo '<tr>';
+        echo '<td>' . $student['commiter_github'] . '</td>';
+        echo '<td>' . '' . '</td>';
+        echo '<td>' . $student['last_commit'] . '</td>';
+        echo '<td>' . $student['total_commits'] . '</td>';
+        echo '<td>' . $student['total_added'] . '</td>';
+        echo '<td>' . $student['total_deleted'] . '</td>';
+        echo '<td>' . $student['total_modified'] . '</td>';
+        echo '</tr>';
     }
     // Cerrar la tabla
     echo '</tbody>';
     echo '</table>';
+    echo '<script>
+    function myFunction()
+    {
+    echo event;
+    }
+    </script>';
     echo "<hr>";
 }
+
 
 function mostrar_configuraciones()
 {
@@ -172,7 +185,7 @@ function mostrar_configuraciones()
     }
 }
 
-function get_all_commit_information_by_repo($repo = '')
+function get_commit_information_by_repo($repo = '')
 {
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
@@ -250,4 +263,10 @@ function get_all_commit_information_by_repo($repo = '')
         curl_close($ch_commits);
         return $commiter_array;
     }
+}
+
+function get_all_repositories()
+{
+    //GET REPOSITORIES FROM THE DB
+    return ['github_patroller', 'PR3', 'TP1'];
 }

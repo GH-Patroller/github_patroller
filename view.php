@@ -5,6 +5,7 @@ require_once($CFG->libdir . '/tablelib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
 require_once(__DIR__ . '/utils.php');
+require_once(__DIR__ . '/views/contributors_insights.php');
 global $DB, $OUTPUT, $PAGE;
 $PAGE->requires->css('/mod/pluginpatroller/style.css');
 
@@ -45,7 +46,7 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 // Contenido según la pestaña activa
 switch ($tab) {
     case 'tab1':
-        mostrar_contributors_insights();
+        show_students_commits_table($context);
         break;
     case 'tab2':
         echo '<button type="button" class="btn btn-primary" onclick="location.href=\'config/crearrepositorios.php?id=' . $id . '\'">Crear Repositorios</button>';
