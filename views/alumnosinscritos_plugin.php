@@ -48,12 +48,14 @@ function mostrar_alumnos_inscritos_plugin($context)
     echo '<th>Usuario en GitHub</th>';  // Nombre GitHub editable
     echo '<th>Grupo</th>';  // Mostrar nombre del Grupo
     echo '<th>Repositorio</th>';  // Mostrar nombre del Repositorio
+    echo '<th>Invitación enviada</th>';  // Mostrar nombre del Repositorio
     echo '</tr>';
     echo '</thead>';
     echo '<tbody>';
 
     // Recuperar los registros de la tabla alumnos_data_patroller
     $alumnos = $DB->get_records('alumnos_data_patroller');
+
 
     if ($alumnos) {
         foreach ($alumnos as $alumno) {
@@ -99,6 +101,17 @@ function mostrar_alumnos_inscritos_plugin($context)
 
                 echo '<td>' . $repo_nombre . '</td>';  // Mostrar El nombre del Repositorio
 
+                if ($alumno->invitacion_enviada == 0) {
+
+                    echo '<td>' . "La invitación no ha sido enviada" . '</td>';  // Mostrar el nombre del alumno
+
+                } else {
+                    echo '<td>' . "La invitación ha sido enviada correctamente" . '</td>';  // Mostrar el nombre del alumno
+                }
+                echo '</tr>';
+
+
+
                 echo '</select>';
                 echo '</td>';
             }
@@ -117,20 +130,25 @@ function mostrar_alumnos_inscritos_plugin($context)
 
     // Si se envía el formulario para guardar los cambios en "Nombre GitHub"
     if (isset($_POST['guardar_cambios'])) {
-        echo "<pre>";
-        var_dump($_POST);
         foreach ($_POST['github'] as $key_alumnoid => $value_githubname) {
             $DB->set_field('alumnos_data_patroller', 'alumno_github', $value_githubname, ['id' => $key_alumnoid]);
-
         }
-        foreach ($_POST['repositorio'] as $alumno_id => $repo_id) {
-            $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id]);
 
+        foreach ($_POST['repositorio'] as $alumno_id => $repo_id) {
+            // Obtener el valor actual de id_repos para el alumno
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos');
+
+            // Solo actualizar invitacion_enviada si id_repos ha cambiado
+            if ($alumno_actual->id_repos != $repo_id) {
+                // Actualizar el repositorio del alumno y setear invitacion_enviada a 0
+                $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id]);
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            }
         }
 
         // Redirigir para reflejar los cambios
         redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')), '', 0);
-
     }
+
 }
 ?>
