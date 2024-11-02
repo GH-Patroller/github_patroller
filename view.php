@@ -2,13 +2,14 @@
 
 require_once('../../config.php');
 require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí cargamos el archivo
-require_once('vistas/crearrepositorios.php');
-require_once('vistas/alumnosinscritos_curso.php');
-require_once('vistas/alumnosinscritos_plugin.php');
-require_once('vistas/alumnosinscritos_vistaalumno.php');
-require_once('vistas/contributorsinsights.php');
+require_once('utils.php');
+require_once('views/contributors_insights.php');
+require_once('views/crearrepositorios.php');
+require_once('views/alumnosinscritos_curso.php');
+require_once('views/alumnosinscritos_plugin.php');
+require_once('views/alumnosinscritos_vistaalumno.php');
 
-global $DB, $OUTPUT, $PAGE, $USER; 
+global $DB, $OUTPUT, $PAGE, $USER;
 
 $PAGE->requires->css('/mod/pluginpatroller/css/style.css');
 
@@ -68,16 +69,16 @@ switch ($tab) {
     case 'tab2':
         if ($is_student) {
             mostrar_alumnos_inscritos_plugin_alumno($context);
-    } else {
-        mostrar_alumnos_inscritos_curso($context);
-        mostrar_alumnos_inscritos_plugin($context);
-    }
+        } else {
+            mostrar_alumnos_inscritos_curso($context);
+            mostrar_alumnos_inscritos_plugin($context);
+        }
 
-    
+
         break;
     case 'tab3':
         if (!$is_student) {
-            mostrar_contributors_insights();
+            show_students_commits_table($context);
         }
         break;
     default:
@@ -87,5 +88,3 @@ switch ($tab) {
 echo "<hr>";
 
 echo $OUTPUT->footer();
-
-?>

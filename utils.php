@@ -38,49 +38,6 @@ function crear_repositorios()
     echo "<br>Grupos:";
 }
 
-function mostrar_contributors_insights()
-{
-    global $DB; // Asegúrate de tener acceso global al DB
-    // Mostrar los datos de la tabla data_patroller
-    // Comenzar la tabla
-    //DATOS MOCKEADOS (REEMPLAZAR CON UNA LLAMADA A LA TABLA REPOSITORIOS)
-    $repositories = ['github_patroller'];
-    echo "<h2>Datos de Alumnos </h2>";
-
-    echo '<table class="generaltable">';
-    echo '<thead>';
-    echo '<tr class="headerrow">';
-    echo '<th>Usuario de Github</th>';
-    echo '<th>Nombre Completo</th>';
-    echo '<th>Fecha del Ultimo commit</th>';
-    echo '<th>Cantidad de commits</th>';
-    echo '<th>Líneas Agregadas</th>';
-    echo '<th>Líneas eliminadas</th>';
-    echo '<th>Líneas modificadas</th>';
-    echo '</tr>';
-    echo '</thead>';
-    echo '<tbody>';
-
-    foreach ($repositories as $repository) {
-        $student_commits = get_all_commit_information_by_repo($repository);
-        foreach ($student_commits as $student) {
-            echo '<tr>';
-            echo '<td>' . $student['commiter_github'] . '</td>';
-            echo '<td>' . '' . '</td>';
-            echo '<td>' . $student['last_commit'] . '</td>';
-            echo '<td>' . $student['total_commits'] . '</td>';
-            echo '<td>' . $student['total_added'] . '</td>';
-            echo '<td>' . $student['total_deleted'] . '</td>';
-            echo '<td>' . $student['total_modified'] . '</td>';
-            echo '</tr>';
-        }
-    }
-    // Cerrar la tabla
-    echo '</tbody>';
-    echo '</table>';
-    echo "<hr>";
-}
-
 function mostrar_configuraciones()
 {
     global $DB; // Asegúrate de tener acceso global al DB
@@ -108,7 +65,7 @@ function mostrar_configuraciones()
     }
 }
 
-function get_all_commit_information_by_repo($repo = '')
+function get_commit_information_by_repo($repo = '')
 {
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
@@ -186,4 +143,30 @@ function get_all_commit_information_by_repo($repo = '')
         curl_close($ch_commits);
         return $commiter_array;
     }
+}
+
+function get_all_repositories()
+{
+    global $DB;
+
+    $repositorios = $DB->get_records('repos_data_patroller', array());
+    $resultado = [];
+    foreach ($repositorios as $repositorio) {
+        $resultado[$repositorio->id] = $repositorio->nombre_repo;
+    }
+    return $resultado;
+}
+
+function get_student_by_repoid($repo_id)
+{
+    global $DB;
+
+    $resultado = $DB->get_records(
+        'alumnos_data_patroller',
+        ['id_repos' => $repo_id],
+        '',
+        '*'
+    );
+
+    return $resultado;
 }
