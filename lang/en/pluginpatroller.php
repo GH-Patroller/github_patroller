@@ -16,6 +16,8 @@ $string['tokenpatroller'] = 'Token Github';
 $string['tokenpatroller_desc'] = 'Token Github del Bot';
 $string['ownerpatroller'] = 'Owner Github';
 $string['ownerpatroller_desc'] = 'Nombre de usuario Github del Bot';
+$string['filterbysede'] = 'Sede';
+$string['filterbycurso'] = 'Curso';
 
 /*
 $string['exammode'] = 'Modo Examen';

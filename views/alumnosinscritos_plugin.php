@@ -4,7 +4,12 @@ function mostrar_alumnos_inscritos_plugin($context)
 {
     global $DB;
 
-    echo '<h2>Lista de Alumnos Inscriptos a Plugin Patroller</h2>';
+    echo '<h2>Lista de Alumnos Inscriptos a Github Patroller</h2>';
+
+    //Botón para enviar invitaciones
+    echo '<form method="post" action="URL_DEL_ARCHIVO" style="display:inline;">';
+    echo '<button type="submit" class="btn btn-primary">Enviar invitaciones</button>';
+    echo '</form>';
 
     // Verificar si ya hay datos en la tabla alumnos_data_patroller
     $hay_datos = $DB->record_exists('alumnos_data_patroller', array());
