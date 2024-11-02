@@ -19,15 +19,30 @@ function mostrar_alumnos_inscritos_plugin_alumno($context)
         $repositorio_id = clean_param($_POST['repositorio'], PARAM_INT);
         $github_username = clean_param($_POST['github_username'], PARAM_TEXT);
 
-        // Guardar el repositorio seleccionado y el nombre de GitHub
-        if ($DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id]) &&
-            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id])) {
-            // Redirigir inmediatamente para reflejar los cambios sin mostrar el mensaje de éxito
+        // Obtener el valor actual de id_repos del alumno
+        $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos, alumno_github');
+
+        // Comprobar si hubo un cambio en id_repos
+        $cambio_repos = ($alumno_actual->id_repos != $repositorio_id);
+
+        // Guardar los datos en la base de datos
+        if (
+            $DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id]) &&
+            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id])
+        ) {
+
+            // Setear invitacion_enviada a 0 solo si hubo un cambio en id_repos
+            if ($cambio_repos) {
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            }
+
+            // Redirigir para reflejar los cambios
             redirect(new moodle_url('/mod/pluginpatroller/view.php', ['id' => $context->instanceid, 'tab' => 'tab2']), '', 0);
         } else {
             print_error('update_failed', 'pluginpatroller');
         }
     }
+
 
     // Mostrar la tabla de alumnos inscritos
     echo '<table class="generaltable">';

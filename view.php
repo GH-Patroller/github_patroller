@@ -49,9 +49,12 @@ $tabrows = array();
 if (!$is_student) {
     $tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Crear Repositorios');
 }
-$tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Inscritos');
+$tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Github Patroller');
 if (!$is_student) {
     $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Contributors Insights');
+}
+if (!$is_student) {
+    $tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), 'Alumnos Inscriptos');
 }
 
 print_tabs(array($tabrows), optional_param('tab', 'tab1', PARAM_TEXT));
@@ -70,17 +73,19 @@ switch ($tab) {
         if ($is_student) {
             mostrar_alumnos_inscritos_plugin_alumno($context);
         } else {
-            mostrar_alumnos_inscritos_curso($context);
             mostrar_alumnos_inscritos_plugin($context);
         }
-
-
         break;
     case 'tab3':
         if (!$is_student) {
             show_students_commits_table($context);
         }
         break;
+        case 'tab4':
+            if (!$is_student) {
+                mostrar_alumnos_inscritos_curso($context);
+            }
+            break;
     default:
         echo "<p>Pestaña desconocida.</p>";
 }
