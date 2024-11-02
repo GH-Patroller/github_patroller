@@ -9,26 +9,25 @@ function show_students_commits_table($context)
     $options_repos = array(
         '' => '-- select a repository --',
     );
-	
-	
-     foreach ($repositories as $key => $value) {
-         $options_repos[$key] = $value;
-     };
+
+
+    foreach ($repositories as $key => $value) {
+        $options_repos[$key] = $value;
+    };
 
 
     echo '<div>';
     echo '<form method="get" action="">
-			<input type="hidden" name="id" value="' .$context->instanceid. '">
-			<input type="hidden" name="tab" value="tab1">
+			<input type="hidden" name="id" value="' . $context->instanceid . '">
+			<input type="hidden" name="tab" value="tab3">
             <button type="submit" class="btn btn-primary">SUBMIT REPO</button>
 		<label for="repository_select"> Repositorio:      </label>
-		'.html_writer::select($options_repos, 'repository_selected', '', null, array('id' => 'repository_select')).
-		'</form>';
-	
+		' . html_writer::select($options_repos, 'repository_selected', '', null, array('id' => 'repository_select')) .
+        '</form>';
+
     if (isset($_GET['repository_selected'])) {
         echo "<pre>";
-		$student_commits = get_student_by_repoid($_GET['repository_selected']);
-		
+        $student_commits = get_student_by_repoid($_GET['repository_selected']);
     }
     echo '</div>';
 
@@ -46,7 +45,7 @@ function show_students_commits_table($context)
     echo '</thead>';
     echo '<tbody>';
     foreach ($student_commits as $student) {
-	
+
         echo '<tr>';
         echo '<td>' . $student->alumno_github . '</td>';
         echo '<td>' . $student->nombre_alumno . '</td>';
@@ -56,11 +55,8 @@ function show_students_commits_table($context)
         echo '<td>' . $student->lineas_eliminadas . '</td>';
         echo '<td>' . $student->lineas_modificadas . '</td>';
         echo '</tr>';
-		
     }
     echo '</tbody>';
     echo '</table>';
     echo '<hr/>';
-
-
-?>
+}
