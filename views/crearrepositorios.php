@@ -67,7 +67,10 @@ function formulario ($course, $id, $context) {
 			$data->nombre_repo = $codigo;
 
 			// Insertar en la base de datos
-			create_repository_by_repo_name($data->nombre_repo);
+			$result = create_repository_by_repo_name($data->nombre_repo);
+			if($result){
+				$DB->insert_record('repos_data_patroller', $data);
+			} 
 		}
 		
 		redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab1')));
