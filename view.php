@@ -34,10 +34,6 @@ $PAGE->set_heading(format_string($course->fullname));
 
 echo $OUTPUT->header();
 
-echo 'Usuario: ' . $USER->username; // Muestra el nombre de usuario
-echo 'ID de Usuario: ' . $USER->id; // Muestra el ID del usuario
-echo 'Correo: ' . $USER->email;     // Muestra el correo del usuario
-
 $roleTeacherid = 3;
 $roleStudentid = 5;
 
