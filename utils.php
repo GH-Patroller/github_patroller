@@ -18,26 +18,6 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
-
-function crear_repositorios()
-{
-    global $course; // Usa global para acceder a la variable $course
-    echo "<h2>Crear Repositorios</h2>";
-
-    echo "<br>Nombre de Materia: " . $course->shortname;
-    echo "<br>Año: " . date("Y");
-    echo "<br>Cuatrimestre: ";
-    echo "<select name='cuatrimestre'>";
-    echo "<option value='11'>1er Año - 1er Cuatrimestre (1º1º)</option>";
-    echo "<option value='12'>1er Año - 2do Cuatrimestre (1º2º)</option>";
-    echo "<option value='21'>2do Año - 1er Cuatrimestre (2º1º)</option>";
-    echo "<option value='22'>2do Año - 2do Cuatrimestre (2º2º)</option>";
-    echo "</select>";
-    echo "<br>Sede:";
-    echo "<br>Curso:";
-    echo "<br>Grupos:";
-}
-
 function mostrar_configuraciones()
 {
     global $DB; // Asegúrate de tener acceso global al DB
@@ -65,7 +45,7 @@ function mostrar_configuraciones()
     }
 }
 
-function get_commit_information_by_repo($repo = '')
+function get_commit_information_by_repo_name($repo_name = '', $last_update = '1970-01-01T01:00:00Z')
 {
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
@@ -73,10 +53,10 @@ function get_commit_information_by_repo($repo = '')
     // BEGIN GitHub API Script
 
     //Establish date for commit retrieval
-    $date = date('Y-m-d');
+    $date = date('Y-m-d') . 'T' . date('H:i:s') . 'Z';
 
     // URL de la API de GitHub para obtener commits por repositorio
-    $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo . '+author-date:<=' . $date . '+sort:author-date-desc';
+    $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo_name . '+author-date:' . $last_update . '..' . $date . '+sort:author-date-desc';
 
     // Iniciar cURL
     $ch_commits = curl_init($commits_url);
@@ -100,7 +80,7 @@ function get_commit_information_by_repo($repo = '')
         echo 'Error al obtener commits: ' . curl_error($ch_commits) . "<br>";
     } else {
         //Crear variables para organizacion de datos
-        $commit_data_array = ["commiter_github" => "", "last_commit" => "", "total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
+        $commit_data_array = ["last_commit" => "", "total_commits" => 0, "total_added" => 0, "total_deleted" => 0, "total_modified" => 0];
         // Decodificar la respuesta JSON
         $commits_data = json_decode($commits_response, true);
 
@@ -108,12 +88,11 @@ function get_commit_information_by_repo($repo = '')
             $commiter_name = $commit['author']['login'];
             if (!array_key_exists($commiter_name, $commiter_array)) {
                 $commiter_array[$commiter_name] = $commit_data_array;
-                $commiter_array[$commiter_name]["commiter_github"] = $commiter_name;
-                $commiter_array[$commiter_name]["last_commit"] = explode("T", $commit["commit"]["author"]["date"])[0];
+                $commiter_array[$commiter_name]["last_commit"] = explode(".", $commit["commit"]["author"]["date"])[0];
             }
 
 
-            $commit_detail_url = "https://api.github.com/repos/$owner/$repo/commits/" . $commit['sha'];
+            $commit_detail_url = "https://api.github.com/repos/$owner/$repo_name/commits/" . $commit['sha'];
             $ch_commit_detail = curl_init($commit_detail_url);
             curl_setopt($ch_commit_detail, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch_commit_detail, CURLOPT_HTTPHEADER, [
@@ -169,4 +148,46 @@ function get_student_by_repoid($repo_id)
     );
 
     return $resultado;
+}
+
+function create_repository_by_repo_name($repo_name = '')
+{
+    $result = (bool)true;
+    // Fetch the GitHub token from plugin settings in the database
+    $token = get_config('pluginpatroller', 'token_patroller');
+    // Get owner and repo from the database (values stored in $pluginpatroller)
+    $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
+
+    $request_body_format = '{
+    "name": "%s",
+    "visibility": "private",
+    "auto_init": true
+    }';
+    // BEGIN GitHub API Script
+    // URL de la API de GitHub para crear repositorio
+    $repo_creation_url = 'https://api.github.com/orgs/' . $owner . '/repos';
+    $request_body = sprintf($request_body_format, $repo_name);
+
+    // Iniciar cURL
+    $ch_repos = curl_init($repo_creation_url);
+    // Configurar las opciones de cURL
+    curl_setopt($ch_repos, CURLOPT_POSTFIELDS, $request_body);
+    curl_setopt($ch_repos, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch_repos, CURLOPT_HTTPHEADER, [
+        'Accept: application/vnd.github+json',
+        'Authorization: Bearer ' . $token,   // Usar el token aquí
+        'User-Agent: GitHub-API-Request'    // GitHub requiere un "User-Agent" en la solicitud
+    ]);
+
+    // Ejecutar la solicitud y obtener la respuesta
+    curl_exec($ch_repos);
+    // Comprobar si hubo errores en la solicitud
+    if (curl_errno($ch_repos)) {
+        echo 'Error al obtener commits: ' . curl_error($ch_repos) . "<br>";
+    }
+    if (curl_getinfo($ch_repos, CURLINFO_HTTP_CODE) == 422) {
+        $result = (bool)false;
+    }
+    curl_close($ch_repos);
+    return $result;
 }
