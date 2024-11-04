@@ -77,11 +77,11 @@ switch ($tab) {
             show_students_commits_table($context);
         }
         break;
-        case 'tab4':
-            if (!$is_student) {
-                mostrar_alumnos_inscritos_curso($context);
-            }
-            break;
+    case 'tab4':
+        if (!$is_student) {
+            mostrar_alumnos_inscritos_curso($context);
+        }
+        break;
     default:
         echo "<p>Pestaña desconocida.</p>";
 }
