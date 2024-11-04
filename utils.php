@@ -18,33 +18,6 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
-function mostrar_configuraciones()
-{
-    global $DB; // Asegúrate de tener acceso global al DB
-    echo "<h2>Datos de Config Patroller</h2>";
-
-    // Fetch the GitHub token from plugin settings in the database
-    $token = get_config('pluginpatroller', 'token_patroller');
-    $owner = get_config('pluginpatroller', 'owner_patroller');
-
-    echo $token . "<br/>";
-    echo $owner . "<br/>";
-    echo "<hr/>";
-
-    // Mostrar los datos de la tabla pluginpatroller
-    echo "<h2>Datos de Instancia PluginPatroller</h2>";
-    $pluginpatroller_records = $DB->get_records('pluginpatroller');
-    foreach ($pluginpatroller_records as $record) {
-        echo "<p>ID: {$record->id}</p>";
-        echo "<p>Nombre: {$record->name}</p>";
-        echo "<p>Formato de Introducción: {$record->introformat}</p>";
-        echo "<p>Tiempo de Creación: " . date('d-m-Y H:i:s', $record->timecreated) . "</p>";
-        echo "<p>Tiempo de Modificación: " . date('d-m-Y H:i:s', $record->timemodified) . "</p>";
-        echo "<p>Última Actualización del API: {$record->apimodified}</p>";
-        echo "<hr>";
-    }
-}
-
 function get_commit_information_by_repo_name($repo_name = '', $last_update = '1970-01-01T01:00:00Z')
 {
     // Get owner and repo from the database (values stored in $pluginpatroller)
@@ -136,7 +109,7 @@ function get_all_repositories()
     return $resultado;
 }
 
-function get_student_by_repoid($repo_id)
+function get_students_by_repoid($repo_id)
 {
     global $DB;
 
@@ -189,5 +162,49 @@ function create_repository_by_repo_name($repo_name = '')
         $result = (bool)false;
     }
     curl_close($ch_repos);
+    return $result;
+}
+
+function invite_students_by_repo_name_list($repo_list)
+{
+    global $DB;
+    $student_list = [];
+    $result = [];
+    $owner = get_config('pluginpatroller', 'owner_patroller');
+    $token = get_config('pluginpatroller', 'token_patroller');
+
+    foreach ($repo_list as $repo_id => $repo_name) {
+        $student_list = get_students_by_repoid($repo_id);
+        foreach ($student_list as $student) {
+            if ($student->invitacion_enviada == 0) {
+                $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;
+                // Iniciar cURL
+                $ch = curl_init($student_invitation_url);
+                // Configurar las opciones de cURL
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Accept: application/vnd.github+json',
+                    'Content-Length: 0',
+                    'Authorization: Bearer ' . $token,   // Usar el token aquí
+                    'User-Agent: GitHub-API-Request'    // GitHub requiere un "User-Agent" en la solicitud
+                ]);
+                curl_exec($ch);
+
+                if (curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 201 && curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 204) {
+                    $result[$student->nombre_alumno] = $repo_name;
+                } else {
+                    $DB->update_record(
+                        'alumnos_data_patroller',
+                        ['id' => $student->id, 'invitacion_enviada' => 1],
+                        $bulk = false
+                    );
+                }
+                curl_close($ch);
+            } else {
+                if ($student->id_repos !== $repo_id) $result[$student->id . "-" . $student->nombre_alumno] = $repo_name;
+            }
+        }
+    }
     return $result;
 }

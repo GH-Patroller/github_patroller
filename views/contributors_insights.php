@@ -27,7 +27,7 @@ function show_students_commits_table($context)
 
     if (isset($_GET['repository_selected'])) {
         echo "<pre>";
-        $student_commits = get_student_by_repoid($_GET['repository_selected']);
+        $student_commits = get_students_by_repoid($_GET['repository_selected']);
     }
     echo '</div>';
 
