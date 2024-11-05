@@ -18,8 +18,9 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
-function get_commit_information_by_repo_name($repo_name = '', $last_update = '1970-01-01T01:00:00Z')
+function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_update = '1970-01-01T01:00:00Z')
 {
+    global $DB;
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
     $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
@@ -91,8 +92,29 @@ function get_commit_information_by_repo_name($repo_name = '', $last_update = '19
 
             curl_close($ch_commit_detail);
         }
-
         curl_close($ch_commits);
+
+        //Actualizar los registros de los estudiantes con la información apropiada
+        $students = get_students_by_repoid($repo_id);
+        foreach ($commiter_array as $commiter_name => $commiter) {
+            foreach ($students as $student) {
+                if ($commiter_name == $student->alumno_github && $student->id_repos == $repo_id) {
+                    $DB->update_record(
+                        'alumnos_data_patroller',
+                        [
+                            'id' => $student->id,
+                            'fecha_ultimo_commit' => $commiter['last_commit'],
+                            'cantidad_commits' => $student->cantidad_commits + $commiter['total_commits'],
+                            'lineas_agregadas' => $student->lineas_agregadas + $commiter['total_added'],
+                            'lineas_eliminadas' => $student->lineas_eliminadas + $commiter['total_deleted'],
+                            'lineas_modificadas' => $student->lineas_modificadas + $commiter['total_modified']
+                        ],
+                        $bulk = false
+                    );
+                    break;
+                }
+            }
+        }
         return $commiter_array;
     }
 }
