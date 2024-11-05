@@ -1,6 +1,6 @@
 <?php
 
-function mostrar_alumnos_inscritos_plugin_alumno($context)
+function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
 {
     global $DB, $USER;
 
@@ -9,8 +9,9 @@ function mostrar_alumnos_inscritos_plugin_alumno($context)
 
     // Obtener la lista de repositorios filtrados por sede y curso del usuario
     $repositorios = $DB->get_records('repos_data_patroller', [
-        'sede' => $USER->institution,
-        'curso' => $USER->department
+        'sede' => get_sede_by_user($course, $USER),
+        'curso' => get_grupo_by_user($course, $USER),
+
     ]);
 
     // Si se envía el formulario para guardar los datos seleccionados
@@ -18,28 +19,29 @@ function mostrar_alumnos_inscritos_plugin_alumno($context)
         $alumno_id = clean_param($_POST['alumno_id'], PARAM_INT);
         $repositorio_id = clean_param($_POST['repositorio'], PARAM_INT);
         $github_username = clean_param($_POST['github_username'], PARAM_TEXT);
+        $cambio_datos = false;
 
-        // Obtener el valor actual de id_repos del alumno
+        // Obtener los valores actuales de id_repos y alumno_github del alumno
         $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos, alumno_github');
 
-        // Comprobar si hubo un cambio en id_repos
-        $cambio_repos = ($alumno_actual->id_repos != $repositorio_id);
+        // Comprobar si el repositorio o el nombre de GitHub han cambiado
+        if ($alumno_actual->id_repos != $repositorio_id) {
+            // Actualizar el repositorio y setear invitacion_enviada a 0
+            $DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id]);
+            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            $cambio_datos = true;
+        }
 
-        // Guardar los datos en la base de datos
-        if (
-            $DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id]) &&
-            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id])
-        ) {
+        if ($alumno_actual->alumno_github != $github_username) {
+            // Actualizar el nombre de usuario de GitHub y setear invitacion_enviada a 0
+            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id]);
+            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            $cambio_datos = true;
+        }
 
-            // Setear invitacion_enviada a 0 solo si hubo un cambio en id_repos
-            if ($cambio_repos) {
-                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
-            }
-
-            // Redirigir para reflejar los cambios
+        // Redirigir solo si hubo cambios
+        if ($cambio_datos) {
             redirect(new moodle_url('/mod/pluginpatroller/view.php', ['id' => $context->instanceid, 'tab' => 'tab2']), '', 0);
-        } else {
-            print_error('update_failed', 'pluginpatroller');
         }
     }
 
@@ -60,12 +62,17 @@ function mostrar_alumnos_inscritos_plugin_alumno($context)
     // Recuperar los registros de la tabla alumnos_data_patroller
     $alumnos = $DB->get_records('alumnos_data_patroller');
     if ($alumnos) {
+        $mi_sede = get_sede_by_user($course, $USER);
+        $mi_curso = get_grupo_by_user($course, $USER);
         foreach ($alumnos as $alumno) {
             $alumno_data = $DB->get_record('user', ['id' => $alumno->id_alumno]);
             // Verificar si el usuario actual pertenece a la misma Sede y Curso
-            if ($alumno_data->institution == $USER->institution && $alumno_data->department == $USER->department) {
+            $sede_alumno = get_sede_by_user($course, $alumno_data);
+            $curso_alumno = get_grupo_by_user($course, $alumno_data);
+            
+            if ($sede_alumno == $mi_sede && $curso_alumno == $mi_curso) {
                 echo '<tr>';
-                echo '<td>' . $alumno_data->institution . ' - ' . $alumno_data->department . '</td>';  // Concatenar Sede y Curso
+                echo '<td>' . $sede_alumno . ' - ' . $curso_alumno . '</td>';  // Concatenar Sede y Curso
                 echo '<td>' . $alumno->nombre_alumno . '</td>';
 
                 // Comprobar si el usuario actual está visualizando su propio registro

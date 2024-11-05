@@ -1,6 +1,6 @@
 <?php
 
-function mostrar_alumnos_inscritos_curso($context)
+function mostrar_alumnos_inscritos_curso($context, $course)
 {
     global $DB;
 
@@ -8,57 +8,8 @@ function mostrar_alumnos_inscritos_curso($context)
     // Obtener todos los usuarios inscritos en el contexto actual
     $enrolled_users = get_enrolled_users($context);
 
-    echo '<div>';
-
-    // Selector de sede
-    $options_sede = array(
-        '' => get_string('all', 'moodle'), // Todos
-        'YA' => 'YA',
-        'BE' => 'BE'
-    );
-    echo '<label for="filterSede" style="margin-right: 15px;">' . get_string('filterbysede', 'pluginpatroller') . ':</label>';
-    echo html_writer::select($options_sede, 'filterSede', '', null, array('id' => 'filterSede', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
-
+    filter_sede_curso($course);
     
-
-    // Selector de curso
-    $options_curso = array(
-        '' => get_string('all', 'moodle'), // Todos
-        'A' => 'A',
-        'B' => 'B',
-        'C' => 'C'
-    );
-    echo '<label for="filterCurso" style="margin-right: 15px;">' . get_string('filterbycurso', 'pluginpatroller') . ':</label>';
-    echo html_writer::select($options_curso, 'filterCurso', '', null, array('id' => 'filterCurso', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
-
-    echo '</div>';
-    ?>
-    <script>
-        function filterTable() {
-            var sedeFilter = document.getElementById('filterSede').value.toUpperCase();
-            var cursoFilter = document.getElementById('filterCurso').value.toUpperCase();
-            var table = document.getElementById("userTable");
-            var tr = table.getElementsByTagName("tr");
-
-            for (var i = 1; i < tr.length; i++) {
-                var tdSede = tr[i].getElementsByTagName("td")[0];
-                var tdCurso = tr[i].getElementsByTagName("td")[1];
-                if (tdSede && tdCurso) {
-                    var sedeValue = tdSede.textContent || tdSede.innerText;
-                    var cursoValue = tdCurso.textContent || tdCurso.innerText;
-                    if ((sedeFilter === "" || sedeValue.toUpperCase() === sedeFilter) &&
-                        (cursoFilter === "" || cursoValue.toUpperCase() === cursoFilter)) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
-                    }
-                }
-            }
-        }
-    </script>
-
-    <?php
-
     // Comenzar la tabla
     echo '<table class="generaltable" id="userTable">';
     echo '<thead>';
@@ -93,8 +44,8 @@ function mostrar_alumnos_inscritos_curso($context)
             if (!$alumno->id_repos) {
                 // Crear la fila de la tabla
                 echo '<tr>';
-                echo '<td>' . $user->institution . '</td>';
-                echo '<td>' . $user->department . '</td>';
+                echo '<td>' . get_sede_by_user($course, $user) . '</td>';
+                echo '<td>' . get_grupo_by_user($course, $user) . '</td>';
                 echo '<td>' . $user->username . '</td>';
                 echo '<td>' . $user->firstname . ' ' . $user->lastname . '</td>';
                 echo '<td>' . $user->email . '</td>';

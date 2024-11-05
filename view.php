@@ -62,14 +62,14 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 switch ($tab) {
     case 'tab1':
         if (!$is_student) {
-            formulario($course, $id, $context);
+            formulario($course, $id, $context, $pluginpatroller->execution_interval);
         }
         break;
     case 'tab2':
         if ($is_student) {
-            mostrar_alumnos_inscritos_plugin_alumno($context);
+            mostrar_alumnos_inscritos_plugin_alumno($context, $course);
         } else {
-            mostrar_alumnos_inscritos_plugin($context);
+            mostrar_alumnos_inscritos_plugin($context, $course);
         }
         break;
     case 'tab3':
@@ -79,7 +79,7 @@ switch ($tab) {
         break;
     case 'tab4':
         if (!$is_student) {
-            mostrar_alumnos_inscritos_curso($context);
+            mostrar_alumnos_inscritos_curso($context, $course);
         }
         break;
     default:
