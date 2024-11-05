@@ -11,13 +11,14 @@ $string['pluginadministration'] = 'pluginpatroller administration';
 
 $string['patrollerheader'] = 'Patroller Config';
 $string['name'] = 'Nombre';
-$string['execution_interval'] = 'intervalo (Min)';
+$string['execution_interval'] = 'Nº Mágico';
 $string['tokenpatroller'] = 'Token Github';
 $string['tokenpatroller_desc'] = 'Token Github del Bot';
 $string['ownerpatroller'] = 'Owner Github';
 $string['ownerpatroller_desc'] = 'Nombre de usuario Github del Bot';
 $string['filterbysede'] = 'Sede';
 $string['filterbycurso'] = 'Curso';
+$string['filterbyrepo'] = 'Repositorio';
 
 /*
 $string['exammode'] = 'Modo Examen';

@@ -18,6 +18,33 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
+function mostrar_configuraciones()
+{
+    global $DB; // Asegúrate de tener acceso global al DB
+    echo "<h2>Datos de Config Patroller</h2>";
+
+    // Fetch the GitHub token from plugin settings in the database
+    $token = get_config('pluginpatroller', 'token_patroller');
+    $owner = get_config('pluginpatroller', 'owner_patroller');
+
+    echo $token . "<br/>";
+    echo $owner . "<br/>";
+    echo "<hr/>";
+
+    // Mostrar los datos de la tabla pluginpatroller
+    echo "<h2>Datos de Instancia PluginPatroller</h2>";
+    $pluginpatroller_records = $DB->get_records('pluginpatroller');
+    foreach ($pluginpatroller_records as $record) {
+        echo "<p>ID: {$record->id}</p>";
+        echo "<p>Nombre: {$record->name}</p>";
+        echo "<p>Formato de Introducción: {$record->introformat}</p>";
+        echo "<p>Tiempo de Creación: " . date('d-m-Y H:i:s', $record->timecreated) . "</p>";
+        echo "<p>Tiempo de Modificación: " . date('d-m-Y H:i:s', $record->timemodified) . "</p>";
+        echo "<p>Última Actualización del API: {$record->apimodified}</p>";
+        echo "<hr>";
+    }
+}
+
 function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_update = '1970-01-01T01:00:00Z')
 {
     global $DB;
@@ -45,7 +72,7 @@ function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_up
 
     // Ejecutar la solicitud y obtener la respuesta
     $commits_response = curl_exec($ch_commits);
-
+	
     // Array para guardar datos de commiters
     $commiter_array = [];
 
@@ -135,15 +162,11 @@ function get_students_by_repoid($repo_id)
 {
     global $DB;
 
-    $resultado = $DB->get_records(
-        'alumnos_data_patroller',
-        ['id_repos' => $repo_id],
-        '',
-        '*'
-    );
+	$resultado = $DB->get_records('alumnos_data_patroller', ['id_repos' => $repo_id]);
 
     return $resultado;
 }
+
 
 function create_repository_by_repo_name($repo_name = '')
 {
@@ -152,6 +175,7 @@ function create_repository_by_repo_name($repo_name = '')
     $token = get_config('pluginpatroller', 'token_patroller');
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
+
 
     $request_body_format = '{
     "name": "%s",
@@ -176,6 +200,7 @@ function create_repository_by_repo_name($repo_name = '')
 
     // Ejecutar la solicitud y obtener la respuesta
     curl_exec($ch_repos);
+
     // Comprobar si hubo errores en la solicitud
     if (curl_errno($ch_repos)) {
         echo 'Error al obtener commits: ' . curl_error($ch_repos) . "<br>";
@@ -185,6 +210,138 @@ function create_repository_by_repo_name($repo_name = '')
     }
     curl_close($ch_repos);
     return $result;
+}
+
+function delete_repository($repo_name) {
+
+    // Token de acceso de GitHub
+	$token = get_config('pluginpatroller', 'token_patroller');
+    // Get owner and repo from the database (values stored in $pluginpatroller)
+    $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
+
+    
+    // URL de la API para eliminar el repositorio
+    $delete_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name;
+    
+    // Inicializar cURL
+    $ch = curl_init($delete_url);
+
+    // Configurar las opciones de cURL
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE'); // Solicitud DELETE
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: token ' . $token,
+        'User-Agent: GitHub-API-Request' // GitHub requiere un "User-Agent" en la solicitud
+    ]);
+
+    // Ejecutar la solicitud y obtener la respuesta
+    $response = curl_exec($ch);
+
+    // Comprobar si hubo errores en la solicitud
+    if (curl_errno($ch)) {
+        echo 'Error al eliminar el repositorio: ' . curl_error($ch);
+    } else {
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($http_code == 204) {
+            echo "Repositorio eliminado exitosamente.";
+        } else {
+            echo "Error al eliminar el repositorio. Código de respuesta HTTP: " . $http_code;
+            echo "<br>Respuesta: " . $response;
+        }
+    }
+
+    // Cerrar cURL
+    curl_close($ch);
+}
+
+function get_sede_by_user($course, $user) {
+
+	$sede = null;
+	$groups = groups_get_all_groups($course->id, $user->id);
+	if (!empty($groups)) {
+		foreach ($groups as $group) {
+			$parts = explode('-', $group->name);
+			if (count($parts) == 2) {
+				$sede = $parts[0];
+			}
+		}
+	}
+	return $sede;
+}
+
+function get_grupo_by_user($course, $user) {
+
+	$grupo = null;
+	$groups = groups_get_all_groups($course->id, $user->id);
+	if (!empty($groups)) {
+		foreach ($groups as $group) {
+			$parts = explode('-', $group->name);
+			if (count($parts) == 2) {
+				$grupo = substr($parts[1], -1);
+			}
+		}
+	}
+	return $grupo;
+}
+
+function get_all_cursos_by_courseid($courseid) {
+    global $DB;
+
+$cursos = [];
+$groups = groups_get_all_groups($courseid);
+    foreach ($groups as $group) {
+    if (preg_match('/^(BE|YA)/', $group->name)) { // Filtra grupos que empiezan con "BE" o "YA"
+        $last_letter = substr($group->name, -1); // Obtiene la última letra del nombre del grupo
+        $cursos[$last_letter] = $last_letter;
+    }
+}
+return $cursos;
+}
+
+
+function filter_sede_curso($course) {
+    echo '<div style="margin:15px">';
+
+    // Selector de sede
+    $options_sede = array(
+        '' => get_string('all', 'moodle'), // Todos
+        'YA' => 'YA',
+        'BE' => 'BE'
+    );
+    echo '<label for="filterSede" style="margin-right: 15px;">' . get_string('filterbysede', 'pluginpatroller') . ':</label>';
+    echo html_writer::select($options_sede, 'filterSede', '', null, array('id' => 'filterSede', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
+
+    // Selector de curso
+    $options_curso = array_merge(get_all_cursos_by_courseid($course->id), ["" => "All"]);
+    echo '<label for="filterCurso" style="margin-right: 15px;">' . get_string('filterbycurso', 'pluginpatroller') . ':</label>';
+    echo html_writer::select($options_curso, 'filterCurso', '', null, array('id' => 'filterCurso', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
+
+    echo '</div>';
+
+    // JavaScript de la función filterTable
+    echo '<script>
+        function filterTable() {
+            var sedeFilter = document.getElementById("filterSede").value.toUpperCase();
+            var cursoFilter = document.getElementById("filterCurso").value.toUpperCase();
+            var table = document.getElementById("userTable");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                var tdSede = tr[i].getElementsByTagName("td")[0];
+                var tdCurso = tr[i].getElementsByTagName("td")[1];
+                if (tdSede && tdCurso) {
+                    var sedeValue = tdSede.textContent || tdSede.innerText;
+                    var cursoValue = tdCurso.textContent || tdCurso.innerText;
+                    if ((sedeFilter === "" || sedeValue.toUpperCase() === sedeFilter) &&
+                        (cursoFilter === "" || cursoValue.toUpperCase() === cursoFilter)) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>';
 }
 
 function invite_students_by_repo_name_list($repo_list)
@@ -198,7 +355,7 @@ function invite_students_by_repo_name_list($repo_list)
     foreach ($repo_list as $repo_id => $repo_name) {
         $student_list = get_students_by_repoid($repo_id);
         foreach ($student_list as $student) {
-            if ($student->invitacion_enviada == 0 || count($repo_list) == 1) {
+            if ($student->invitacion_enviada == 0) {
                 $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;
                 // Iniciar cURL
                 $ch = curl_init($student_invitation_url);

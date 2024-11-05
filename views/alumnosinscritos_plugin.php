@@ -1,15 +1,59 @@
 <?php
 
-function mostrar_alumnos_inscritos_plugin($context)
+function mostrar_alumnos_inscritos_plugin($context, $course)
 {
     global $DB;
+    $repositories = get_all_repositories();
+    $student_commits = [];
+    $options_repos = array(
+        'All' => 'Todos los Repositorios',
+    );
+
+
+
+    echo '<h2>Envio de Invitaciones</h2>';
+
+    if (isset($_GET['repository_selected'])) {
+        if ($_GET['repository_selected'] == 'All') {
+            $repo_list = $repositories;
+        } else {
+            $repo_list[$_GET['repository_selected']] = $repositories[$_GET['repository_selected']];
+        }
+
+        echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
+    Las invitaciones se enviaron correctamente.
+</div>';
+
+        invite_students_by_repo_name_list($repo_list);
+
+    }
+
+    foreach ($repositories as $key => $value) {
+        $options_repos[$key] = $value;
+    }
+    ;
+
+
+    echo '<div style="margin: 35px">';
+    echo '<form method="get" action="">
+			<input type="hidden" name="id" value="' . $context->instanceid . '">
+			<input type="hidden" name="tab" value="tab2">
+		<label for="repository_select">Selecionar Repositorio:      </label>
+		' . html_writer::select($options_repos, 'repository_selected', '', null, array('id' => 'repository_select')) .
+        '
+            <button type="submit" class="btn btn-primary" style="margin-left: 25px">Enviar invitaciones</button>
+		</form>
+		';
+
+    echo '</div>';
+
+    echo "<hr style='margin-top: 50px'>";
+    echo "<hr style='margin-bottom: 50px'>";
 
     echo '<h2>Lista de Alumnos Inscriptos a Github Patroller</h2>';
+    filter_sede_curso($course);
 
-    //Botón para enviar invitaciones
-    echo '<form method="post" action="URL_DEL_ARCHIVO" style="display:inline;">';
-    echo '<button type="submit" class="btn btn-primary">Enviar invitaciones</button>';
-    echo '</form>';
+    //$repo_id => $repo_name
 
     // Verificar si ya hay datos en la tabla alumnos_data_patroller
     $hay_datos = $DB->record_exists('alumnos_data_patroller', array());
@@ -40,10 +84,11 @@ function mostrar_alumnos_inscritos_plugin($context)
 
     // Mostrar la tabla de alumnos inscritos
     echo '<form method="post" action="">';
-    echo '<table class="generaltable">';
+    echo '<table class="generaltable" id="userTable">';
     echo '<thead>';
     echo '<tr class="headerrow">';
-    echo '<th>Sede y Curso</th>';  // Mostrar primero "Sede y Curso"
+    echo '<th>Sede</th>';
+    echo '<th>Curso</th>';
     echo '<th>Nombre y Apellido</th>';
     echo '<th>Usuario en GitHub</th>';  // Nombre GitHub editable
     echo '<th>Grupo</th>';  // Mostrar nombre del Grupo
@@ -63,23 +108,14 @@ function mostrar_alumnos_inscritos_plugin($context)
             if ($alumno->id_repos) {
                 // Obtener los datos de la tabla repos_data_patroller
                 $repo = $DB->get_record('repos_data_patroller', ['id' => $alumno->id_repos], 'sede, curso, nombre_repo');
-                $alumno_data = $DB->get_record('user', ['id' => $alumno->id_alumno], 'institution, department');
-                $sede_curso = '';
-                if (!empty($alumno->id_repos)) {
-                    // Obtener sede, curso y nombre del repositorio
-                    if ($repo) {
-                        // Concatenar sede y curso
-                        $sede_curso = $repo->sede . ' - ' . $repo->curso;
-                        $repo_nombre = $repo->nombre_repo;
-                    } else {
-                        $sede_curso = 'Sede y curso no asignados';
-                        $repo_nombre = 'Repositorio no asignado';
-                    }
-                }
-
+                $alumno_data = $DB->get_record('user', ['id' => $alumno->id_alumno]);
+                $alumno_data->sede = get_sede_by_user($course, $alumno_data);
+                $alumno_data->curso = get_grupo_by_user($course, $alumno_data);
 
                 echo '<tr>';
-                echo '<td>' . $sede_curso . '</td>';  // Mostrar la concatenación de sede y curso primero
+                //echo '<td>' . (!isset($repo->sede)) ? "El repositorio no existe ": $repo->sede . '</td>';  // Mostrar la concatenación de sede y curso primero
+                echo '<td>' . $repo->sede . '</td>';  // Mostrar la concatenación de sede y curso primero
+                echo '<td>' . $repo->curso . '</td>';  // Mostrar la concatenación de sede y curso primero
                 echo '<td>' . $alumno->nombre_alumno . '</td>';  // Mostrar el nombre del alumno
 
                 // Hacer editable el campo de "Nombre GitHub"
@@ -93,13 +129,13 @@ function mostrar_alumnos_inscritos_plugin($context)
                 echo '<select name="repositorio[' . $alumno->id . ']">';
 
                 foreach ($repositorios as $repo) {
-                    if ($repo->sede == $alumno_data->institution && $repo->curso == $alumno_data->department) {
+                    if ($repo->sede == $alumno_data->sede && $repo->curso == $alumno_data->curso) {
                         $selected = ($alumno->id_repos == $repo->id) ? 'selected' : '';
                         echo '<option value="' . $repo->id . '" ' . $selected . '>' . $repo->num_grupo . '</option>';
                     }
                 }
 
-                echo '<td>' . $repo_nombre . '</td>';  // Mostrar El nombre del Repositorio
+                echo '<td>' . $repo->nombre_repo . '</td>';  // Mostrar El nombre del Repositorio
 
                 if ($alumno->invitacion_enviada == 0) {
 
@@ -130,24 +166,36 @@ function mostrar_alumnos_inscritos_plugin($context)
 
     // Si se envía el formulario para guardar los cambios en "Nombre GitHub"
     if (isset($_POST['guardar_cambios'])) {
+        $cambio_datos = false; // Variable para rastrear si hubo cambios
+
+        // Actualización de nombres de GitHub
         foreach ($_POST['github'] as $key_alumnoid => $value_githubname) {
-            $DB->set_field('alumnos_data_patroller', 'alumno_github', $value_githubname, ['id' => $key_alumnoid]);
-        }
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $key_alumnoid], 'alumno_github, invitacion_enviada');
 
-        foreach ($_POST['repositorio'] as $alumno_id => $repo_id) {
-            // Obtener el valor actual de id_repos para el alumno
-            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos');
-
-            // Solo actualizar invitacion_enviada si id_repos ha cambiado
-            if ($alumno_actual->id_repos != $repo_id) {
-                // Actualizar el repositorio del alumno y setear invitacion_enviada a 0
-                $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id]);
-                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            if ($alumno_actual->alumno_github != $value_githubname) {
+                // Cambiar el nombre de usuario de GitHub y actualizar invitacion_enviada a "no enviada"
+                $DB->set_field('alumnos_data_patroller', 'alumno_github', $value_githubname, ['id' => $key_alumnoid]);
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $key_alumnoid]);
+                $cambio_datos = true;
             }
         }
 
-        // Redirigir para reflejar los cambios
-        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')), '', 0);
+        // Actualización de repositorios
+        foreach ($_POST['repositorio'] as $alumno_id => $repo_id) {
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos, invitacion_enviada');
+
+            if ($alumno_actual->id_repos != $repo_id) {
+                // Cambiar el repositorio y actualizar invitacion_enviada a "no enviada"
+                $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id]);
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+                $cambio_datos = true;
+            }
+        }
+
+        // Redirigir solo si se hicieron cambios
+        if ($cambio_datos) {
+            redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')), '', 0);
+        }
     }
 
 }
