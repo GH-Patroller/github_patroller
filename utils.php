@@ -176,7 +176,7 @@ function invite_students_by_repo_name_list($repo_list)
     foreach ($repo_list as $repo_id => $repo_name) {
         $student_list = get_students_by_repoid($repo_id);
         foreach ($student_list as $student) {
-            if ($student->invitacion_enviada == 0) {
+            if ($student->invitacion_enviada == 0 || count($repo_list) == 1) {
                 $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;
                 // Iniciar cURL
                 $ch = curl_init($student_invitation_url);
