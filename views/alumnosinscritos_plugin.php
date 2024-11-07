@@ -3,8 +3,9 @@
 function mostrar_alumnos_inscritos_plugin($context, $course)
 {
     global $DB;
-    $repositories = get_all_repositories();
-    $student_commits = [];
+    $repositories = get_all_repositories_by_courseid($course->id);
+   
+
     $options_repos = array(
         'All' => 'Todos los Repositorios',
     );
@@ -24,15 +25,13 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
     Las invitaciones se enviaron correctamente.
 </div>';
 
-        invite_students_by_repo_name_list($repo_list);
+        invite_students_by_repo_name_list($repo_list, $course->id);
 
     }
 
     foreach ($repositories as $key => $value) {
         $options_repos[$key] = $value;
     }
-    ;
-
 
     echo '<div style="margin: 35px">';
     echo '<form method="get" action="">
@@ -53,14 +52,11 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
     echo '<h2>Lista de Alumnos Inscriptos a Github Patroller</h2>';
     filter_sede_curso($course);
 
-    //$repo_id => $repo_name
-
     // Verificar si ya hay datos en la tabla alumnos_data_patroller
-    $hay_datos = $DB->record_exists('alumnos_data_patroller', array());
-    $repositorios = $DB->get_records('repos_data_patroller');
+    $hay_datos = $DB->get_records('alumnos_data_patroller', array('id_materia' => $course->id));
 
     // Mostrar el botón solo si no hay datos en la tabla
-    if (!$hay_datos) {
+    if (empty($hay_datos)) {
         echo '<form method="post" action="">
                 <button type="submit" name="cargar_alumnos" class="btn btn-primary">Cargar Alumnos</button>
               </form>';
@@ -75,6 +71,7 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
             $data->nombre_alumno = $user->firstname . ' ' . $user->lastname;
             $data->mail_alumno = $user->email;
             $data->id_alumno = $user->id;
+            $data->id_materia = $course->id;
             $DB->insert_record('alumnos_data_patroller', $data);
         }
 
@@ -89,7 +86,7 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
     echo '<tr class="headerrow">';
     echo '<th>Sede</th>';
     echo '<th>Curso</th>';
-    echo '<th>Nombre y Apellido</th>';
+    echo '<th>Nombre Completo</th>';
     echo '<th>Usuario en GitHub</th>';  // Nombre GitHub editable
     echo '<th>Grupo</th>';  // Mostrar nombre del Grupo
     echo '<th>Repositorio</th>';  // Mostrar nombre del Repositorio
@@ -99,7 +96,8 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
     echo '<tbody>';
 
     // Recuperar los registros de la tabla alumnos_data_patroller
-    $alumnos = $DB->get_records('alumnos_data_patroller');
+    $alumnos = $DB->get_records('alumnos_data_patroller', array('id_materia' => $course->id));
+    $repositorios = $DB->get_records('repos_data_patroller', array('id_materia' => $course->id));
 
 
     if ($alumnos) {
@@ -107,7 +105,7 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
             // Si el alumno tiene un repositorio asignado se muestra en la tabla
             if ($alumno->id_repos) {
                 // Obtener los datos de la tabla repos_data_patroller
-                $repo = $DB->get_record('repos_data_patroller', ['id' => $alumno->id_repos], 'sede, curso, nombre_repo');
+                $repo = $DB->get_record('repos_data_patroller', ['id' => $alumno->id_repos, 'id_materia' => $course->id], 'sede, curso, nombre_repo');
                 $alumno_data = $DB->get_record('user', ['id' => $alumno->id_alumno]);
                 $alumno_data->sede = get_sede_by_user($course, $alumno_data);
                 $alumno_data->curso = get_grupo_by_user($course, $alumno_data);
@@ -128,10 +126,10 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
                 echo '<td>';
                 echo '<select name="repositorio[' . $alumno->id . ']">';
 
-                foreach ($repositorios as $repo) {
-                    if ($repo->sede == $alumno_data->sede && $repo->curso == $alumno_data->curso) {
-                        $selected = ($alumno->id_repos == $repo->id) ? 'selected' : '';
-                        echo '<option value="' . $repo->id . '" ' . $selected . '>' . $repo->num_grupo . '</option>';
+                foreach ($repositorios as $repositorio) {
+                    if ($repositorio->sede == $alumno_data->sede && $repositorio->curso == $alumno_data->curso) {
+                        $selected = ($alumno->id_repos == $repositorio->id) ? 'selected' : '';
+                        echo '<option value="' . $repositorio->id . '" ' . $selected . '>' . $repositorio->num_grupo . '</option>';
                     }
                 }
 
@@ -170,24 +168,24 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
 
         // Actualización de nombres de GitHub
         foreach ($_POST['github'] as $key_alumnoid => $value_githubname) {
-            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $key_alumnoid], 'alumno_github, invitacion_enviada');
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $key_alumnoid, 'id_materia' => $course->id], 'alumno_github, invitacion_enviada');
 
             if ($alumno_actual->alumno_github != $value_githubname) {
                 // Cambiar el nombre de usuario de GitHub y actualizar invitacion_enviada a "no enviada"
-                $DB->set_field('alumnos_data_patroller', 'alumno_github', $value_githubname, ['id' => $key_alumnoid]);
-                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $key_alumnoid]);
+                $DB->set_field('alumnos_data_patroller', 'alumno_github', $value_githubname, ['id' => $key_alumnoid, 'id_materia' => $course->id]);
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $key_alumnoid, 'id_materia' => $course->id]);
                 $cambio_datos = true;
             }
         }
 
         // Actualización de repositorios
         foreach ($_POST['repositorio'] as $alumno_id => $repo_id) {
-            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos, invitacion_enviada');
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id, 'id_materia' => $course->id], 'id_repos, invitacion_enviada');
 
             if ($alumno_actual->id_repos != $repo_id) {
                 // Cambiar el repositorio y actualizar invitacion_enviada a "no enviada"
-                $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id]);
-                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+                $DB->set_field('alumnos_data_patroller', 'id_repos', $repo_id, ['id' => $alumno_id, 'id_materia' => $course->id]);
+                $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id, 'id_materia' => $course->id]);
                 $cambio_datos = true;
             }
         }

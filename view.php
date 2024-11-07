@@ -62,7 +62,7 @@ $tab = optional_param('tab', 'tab1', PARAM_TEXT);
 switch ($tab) {
     case 'tab1':
         if (!$is_student) {
-            formulario($course, $id, $context, $pluginpatroller->execution_interval);
+            formulario($course, $context, $pluginpatroller->execution_interval);
         }
         break;
     case 'tab2':
@@ -74,7 +74,7 @@ switch ($tab) {
         break;
     case 'tab3':
         if (!$is_student) {
-            show_students_commits_table($context);
+            show_students_commits_table($context, $course);
         }
         break;
     case 'tab4':

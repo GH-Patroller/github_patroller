@@ -11,6 +11,7 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
     $repositorios = $DB->get_records('repos_data_patroller', [
         'sede' => get_sede_by_user($course, $USER),
         'curso' => get_grupo_by_user($course, $USER),
+        'id_materia' => $course->id,
 
     ]);
 
@@ -22,36 +23,41 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
         $cambio_datos = false;
 
         // Obtener los valores actuales de id_repos y alumno_github del alumno
-        $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id], 'id_repos, alumno_github');
+        $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id, 'id_materia' => $course->id], 'id_repos, alumno_github');
 
         // Comprobar si el repositorio o el nombre de GitHub han cambiado
         if ($alumno_actual->id_repos != $repositorio_id) {
             // Actualizar el repositorio y setear invitacion_enviada a 0
-            $DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id]);
-            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            $DB->set_field('alumnos_data_patroller', 'id_repos', $repositorio_id, ['id' => $alumno_id, 'id_materia' => $course->id]);
+            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id, 'id_materia' => $course->id]);
             $cambio_datos = true;
         }
 
         if ($alumno_actual->alumno_github != $github_username) {
             // Actualizar el nombre de usuario de GitHub y setear invitacion_enviada a 0
-            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id]);
-            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id]);
+            $DB->set_field('alumnos_data_patroller', 'alumno_github', $github_username, ['id' => $alumno_id, 'id_materia' => $course->id]);
+            $DB->set_field('alumnos_data_patroller', 'invitacion_enviada', 0, ['id' => $alumno_id, 'id_materia' => $course->id]);
             $cambio_datos = true;
         }
 
         // Redirigir solo si hubo cambios
         if ($cambio_datos) {
-            redirect(new moodle_url('/mod/pluginpatroller/view.php', ['id' => $context->instanceid, 'tab' => 'tab2']), '', 0);
+            redirect(new moodle_url('/mod/pluginpatroller/view.php', ['id' => $context->instanceid, 'tab' => 'tab2', 'state' => 'true']), '', 0);
         }
     }
 
+    if ($_GET['state']) {
+        echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
+		Los datos se actualizaron correctamente
+		</div>';
+    }
 
     // Mostrar la tabla de alumnos inscritos
     echo '<table class="generaltable">';
     echo '<thead>';
     echo '<tr class="headerrow">';
     echo '<th>Sede y Curso</th>';  // Mostrar los campos de Sede y Curso
-    echo '<th>Usuario en Moodle</th>';
+    echo '<th>Nombre Completo</th>';
     echo '<th>Nombre GitHub</th>';  // Campo editable solo para el usuario actual
     echo '<th>Grupo</th>';          // Desplegable editable solo para el usuario actual
     echo '<th>Guardar</th>';        // Botón para guardar solo para el usuario actual
@@ -60,7 +66,7 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
     echo '<tbody>';
 
     // Recuperar los registros de la tabla alumnos_data_patroller
-    $alumnos = $DB->get_records('alumnos_data_patroller');
+    $alumnos = $DB->get_records('alumnos_data_patroller', array('id_materia' => $course->id));
     if ($alumnos) {
         $mi_sede = get_sede_by_user($course, $USER);
         $mi_curso = get_grupo_by_user($course, $USER);
@@ -69,7 +75,7 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
             // Verificar si el usuario actual pertenece a la misma Sede y Curso
             $sede_alumno = get_sede_by_user($course, $alumno_data);
             $curso_alumno = get_grupo_by_user($course, $alumno_data);
-            
+
             if ($sede_alumno == $mi_sede && $curso_alumno == $mi_curso) {
                 echo '<tr>';
                 echo '<td>' . $sede_alumno . ' - ' . $curso_alumno . '</td>';  // Concatenar Sede y Curso

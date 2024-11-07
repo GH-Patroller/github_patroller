@@ -16,7 +16,7 @@ function mostrar_alumnos_inscritos_curso($context, $course)
     echo '<tr class="headerrow">';
     echo '<th>Sede</th>';
     echo '<th>Curso</th>';
-    echo '<th>Usuario en Moodle</th>';
+    echo '<th>Usuario en Aula Virtual</th>';
     echo '<th>Nombre Completo</th>';
     echo '<th>Correo</th>';
     echo '</tr>';
