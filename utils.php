@@ -45,7 +45,7 @@ function mostrar_configuraciones()
     }
 }
 
-function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_update = '1970-01-01T01:00:00Z')
+function get_commit_information_by_repo_name($repo_id, $repo_name = '', $courseid, $last_update = '1970-01-01T01:00:00Z')
 {
     global $DB;
     // Get owner and repo from the database (values stored in $pluginpatroller)
@@ -122,7 +122,7 @@ function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_up
         curl_close($ch_commits);
 
         //Actualizar los registros de los estudiantes con la información apropiada
-        $students = get_students_by_repoid($repo_id);
+        $students = get_students_by_repoid($repo_id, $courseid);
         foreach ($commiter_array as $commiter_name => $commiter) {
             foreach ($students as $student) {
                 if ($commiter_name == $student->alumno_github && $student->id_repos == $repo_id) {
@@ -131,11 +131,15 @@ function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_up
                         [
                             'id' => $student->id,
                             'fecha_ultimo_commit' => $commiter['last_commit'],
-                            'cantidad_commits' => $student->cantidad_commits + $commiter['total_commits'],
-                            'lineas_agregadas' => $student->lineas_agregadas + $commiter['total_added'],
-                            'lineas_eliminadas' => $student->lineas_eliminadas + $commiter['total_deleted'],
-                            'lineas_modificadas' => $student->lineas_modificadas + $commiter['total_modified']
-                        ],
+                            //'cantidad_commits' => $student->cantidad_commits + $commiter['total_commits'],
+                            //'lineas_agregadas' => $student->lineas_agregadas + $commiter['total_added'],
+                            //'lineas_eliminadas' => $student->lineas_eliminadas + $commiter['total_deleted'],
+                            //'lineas_modificadas' => $student->lineas_modificadas + $commiter['total_modified']
+                            'cantidad_commits' => $commiter['total_commits'],
+                            'lineas_agregadas' => $commiter['total_added'],
+                            'lineas_eliminadas' => $commiter['total_deleted'],
+                            'lineas_modificadas' =>  $commiter['total_modified'],
+                          ],
                         $bulk = false
                     );
                     break;
@@ -146,11 +150,11 @@ function get_commit_information_by_repo_name($repo_id, $repo_name = '', $last_up
     }
 }
 
-function get_all_repositories()
+function get_all_repositories_by_courseid($courseid)
 {
     global $DB;
 
-    $repositorios = $DB->get_records('repos_data_patroller', array());
+    $repositorios = $DB->get_records('repos_data_patroller', array('id_materia' => $courseid));
     $resultado = [];
     foreach ($repositorios as $repositorio) {
         $resultado[$repositorio->id] = $repositorio->nombre_repo;
@@ -158,11 +162,11 @@ function get_all_repositories()
     return $resultado;
 }
 
-function get_students_by_repoid($repo_id)
+function get_students_by_repoid($repo_id, $courseid)
 {
     global $DB;
 
-	$resultado = $DB->get_records('alumnos_data_patroller', ['id_repos' => $repo_id]);
+	$resultado = $DB->get_records('alumnos_data_patroller', ['id_repos' => $repo_id, 'id_materia' => $courseid]);
 
     return $resultado;
 }
@@ -344,7 +348,7 @@ function filter_sede_curso($course) {
     </script>';
 }
 
-function invite_students_by_repo_name_list($repo_list)
+function invite_students_by_repo_name_list($repo_list, $courseid)
 {
     global $DB;
     $student_list = [];
@@ -353,7 +357,7 @@ function invite_students_by_repo_name_list($repo_list)
     $token = get_config('pluginpatroller', 'token_patroller');
 
     foreach ($repo_list as $repo_id => $repo_name) {
-        $student_list = get_students_by_repoid($repo_id);
+        $student_list = get_students_by_repoid($repo_id, $courseid);
         foreach ($student_list as $student) {
             if ($student->invitacion_enviada == 0) {
                 $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;

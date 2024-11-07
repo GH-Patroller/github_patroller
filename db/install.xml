@@ -10,13 +10,11 @@
 				<FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Formato de introducción"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de creación"/>
                 <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de modificación"/>
-                <!-- Datos de Bot Instancia -->
-                <FIELD NAME="apimodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="última actualización del API"/>
-				<FIELD NAME="execution_interval" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" COMMENT="Intervalo de ejecución en minutos"/>
-
+				<FIELD NAME="last_api_refresh" TYPE="char" LENGTH="30" NOTNULL="false" DEFAULT="" COMMENT="última actualización del API"/>
+                <FIELD NAME="execution_interval" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" COMMENT="Intervalo de ejecución en minutos"/>
             </FIELDS>
             <KEYS>
-                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>  
             </KEYS>
         </TABLE>
 
@@ -24,14 +22,15 @@
             <FIELDS>
                 <!-- Datos del Repositorio -->
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="ID único"/>
+                <FIELD NAME="id_materia" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID repositorios"/>
                 <FIELD NAME="sede" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="sede"/>
                 <FIELD NAME="curso" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="Curso"/>
                 <FIELD NAME="num_grupo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="numero de grupo"/>
                 <FIELD NAME="nombre_repo" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="Nombre Repositorio"/>
-
-            </FIELDS>
+           </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
+                <KEY NAME="fk_materia" TYPE="foreign" FIELDS="id_materia" REFTABLE="course" REFFIELDS="id"/>
             </KEYS>
         </TABLE>
 
@@ -41,6 +40,7 @@
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="ID único"/>
                 <FIELD NAME="id_repos" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID repositorios"/>
                 <FIELD NAME="id_alumno" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID Alumnos asignaodos en el curso"/>
+                <FIELD NAME="id_materia" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID repositorios"/>
                 <FIELD NAME="nombre_alumno" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="nombre_alumno"/>
                 <FIELD NAME="mail_alumno" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="mail_alumno"/>
                 <FIELD NAME="alumno_github" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="" COMMENT="usuario github del alumno"/>
@@ -55,6 +55,7 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
                 <KEY NAME="fk_repos" TYPE="foreign" FIELDS="id_repos" REFTABLE="repos_data_patroller" REFFIELDS="id"/>
                 <KEY NAME="fk_alumno" TYPE="foreign" FIELDS="id_alumno" REFTABLE="user" REFFIELDS="id"/>
+                <KEY NAME="fk_materia" TYPE="foreign" FIELDS="id_materia" REFTABLE="course" REFFIELDS="id"/>
             </KEYS>
         </TABLE>
 
