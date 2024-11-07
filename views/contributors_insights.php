@@ -3,8 +3,9 @@
 
 function show_students_commits_table($context, $course)
 {
-    global $DB; // Asegúrate de tener acceso global al DB
+    global $DB;
     $repositories = get_all_repositories_by_courseid($course->id);
+    $owner = get_config('pluginpatroller', 'owner_patroller');
     $student_commits = [];
     $options_repos = array(
         'All' => 'Todos los Repositorios'
@@ -13,21 +14,12 @@ function show_students_commits_table($context, $course)
     $selected_repo = isset($_GET['filterRepo']) ? $_GET['filterRepo'] : 'All';
 
     foreach ($repositories as $key => $value) {
-           $options_repos[$key] = $value;
-       };
+        $options_repos[$key] = $value;
+    };
 
     if ($_GET['filterRepo']) {
-        if ($selected_repo == 'All') {
-            foreach ($repositories as $key => $value) {
-                get_commit_information_by_repo_name($key, $value, $course->id);
-            }
-        } else {
-            get_commit_information_by_repo_name($selected_repo, $repositories[$selected_repo], $course->id);
-        }
-
-
+        update_commit_information($course->id);
         redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3', 'sucx' => 'true')));
-
     }
 
     if ($_GET['sucx']) {
@@ -37,14 +29,12 @@ function show_students_commits_table($context, $course)
     }
 
     // Selector de curso
-    //$options_repo = array_merge($repositories, ["" => "All"]);
     echo '<div style="margin:15px">';
     echo '<form method="get" action="">
 			<input type="hidden" name="id" value="' . $context->instanceid . '">
 			<input type="hidden" name="tab" value="tab3">';
 
     echo '<label for="filterRepo" style="margin-right: 15px;">' . get_string('filterbyrepo', 'pluginpatroller') . ':</label>';
-    //echo html_writer::select($options_repos, 'filterRepo', '', null, array('id' => 'filterRepo', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
     echo html_writer::select($options_repos, 'filterRepo', $selected_repo, null, array(
         'id' => 'filterRepo',
         'onchange' => 'filterTable()',
@@ -67,13 +57,8 @@ function show_students_commits_table($context, $course)
             $student->repoid = $key;
             $student->reponame = $value;
         }
-        //		echo "<pre>";
-        //	var_dump($repo);
         $student_commits = array_merge($student_commits, $repo);
-
-
-    }
-    ;
+    };
 
 
     echo '<table class="generaltable" id="repoTable">';
@@ -95,7 +80,6 @@ function show_students_commits_table($context, $course)
         echo '<tr>';
         echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/graphs/contributors' target='_blank'>" . htmlspecialchars($student->reponame) . "</a></td>";
         echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/commits?author={$student->alumno_github}' target='_blank'>" . gitlogo() . htmlspecialchars($student->alumno_github) . "</a></td>";
-        //echo '<td>' . $student->alumno_github . '</td>';
         echo '<td>' . $student->nombre_alumno . '</td>';
         echo '<td>' . $student->fecha_ultimo_commit . '</td>';
         echo '<td>' . $student->cantidad_commits . '</td>';
