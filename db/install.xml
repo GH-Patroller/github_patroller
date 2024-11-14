@@ -49,7 +49,8 @@
                 <FIELD NAME="lineas_eliminadas" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="lineas_eliminadas"/>
                 <FIELD NAME="lineas_modificadas" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" COMMENT="lineas_modificadas"/>
                 <FIELD NAME="fecha_ultimo_commit" TYPE="char" LENGTH="30" NOTNULL="false" DEFAULT="" COMMENT="fecha_ultimo_commit"/>
-                <FIELD NAME="invitacion_enviada" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" COMMENT="Indica si se ha enviado invitación al alumno"/>             
+                <FIELD NAME="calificacion_alumno" TYPE="char" LENGTH="10" NOTNULL="false" DEFAULT="" COMMENT="calificacion del alumno"/>
+                <FIELD NAME="invitacion_enviada" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" COMMENT="Indica si se ha enviado invitación al alumno"/>       
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Clave primaria"/>
