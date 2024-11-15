@@ -18,11 +18,11 @@ function formulario($course, $context, $execution_interval)
 
 
 		//-------------------------------------------
-		// Sinó Apreto el botón, ejecuta las tablas de vista
+		// Si nó Apreto el botón, ejecuta las tablas de vista
 		//-------------------------------------------
 
 	} else {
-		$data = $DB->get_records('repos_data_patroller', array('id_materia' => $course->id));
+		$repos = $DB->get_records('repos_data_patroller', array('id_materia' => $course->id));
 
 		echo "<br>Nombre de Materia: <span id='nombre_materia'>" . $course->shortname . "</span>";
 		echo "<br>Año: <span id='ano'>" . date("Y") . "</span>";
@@ -32,7 +32,7 @@ function formulario($course, $context, $execution_interval)
 		// Primera vista, Los repositorios ya fueron creados
 		//-------------------------------------------
 
-		if ($data) {
+		if ($repos) {
 			// Ya existen repositorios Creados
 			echo '<h2>Repositorios Creados </h2>';
 			// Verificar si hay registros
@@ -41,7 +41,7 @@ function formulario($course, $context, $execution_interval)
 			echo "<tbody>";
 
 			// Recorrer los registros y mostrarlos en la tabla
-			foreach ($data as $repo) {
+			foreach ($repos as $repo) {
 				echo "<tr>";
 				echo "<td>" . htmlspecialchars($repo->id) . "</td>";
 				echo "<td>" . htmlspecialchars($repo->sede) . "</td>";
@@ -125,7 +125,7 @@ function crear_repositorios($context, $course, $execution_interval)
 		}
 	}
 
-	// Insertar los repositorios ficticios en la base de datos
+	// Insertar los repositorios en la base de datos
 	foreach ($codigos as $codigo) {
 		$parts = explode('-', $codigo);
 		$sede = $parts[2];
@@ -143,10 +143,26 @@ function crear_repositorios($context, $course, $execution_interval)
 
 		$resultado = create_repository_by_repo_name($codigo);
 		if ($resultado) {
-			//Insertar en la base de datos
+		//	Insertar en la base de datos
 			$DB->insert_record('repos_data_patroller', $data);
 		}
 	}
+	
+	//-----------------------------------------
+	//      Realiza la precarga de alumnos
+	//-----------------------------------------
+	
+	$enrolled_users = get_enrolled_users($context);
+
+	foreach ($enrolled_users as $user) {
+		$data = new stdClass();
+		$data->nombre_alumno = $user->firstname . ' ' . $user->lastname;
+		$data->mail_alumno = $user->email;
+		$data->id_alumno = $user->id;
+		$data->id_materia = $course->id;
+		$DB->insert_record('alumnos_data_patroller', $data);
+	}
+	
 
 }
 
