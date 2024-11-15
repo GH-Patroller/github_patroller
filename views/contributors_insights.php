@@ -13,8 +13,9 @@ function show_students_commits_table($context, $course)
     $selected_repo = isset($_GET['filterRepo']) ? $_GET['filterRepo'] : 'All';
 
     foreach ($repositories as $key => $value) {
-           $options_repos[$key] = $value;
-       };
+        $options_repos[$key] = $value;
+    }
+    ;
 
     if ($_GET['filterRepo']) {
         if ($selected_repo == 'All') {
@@ -32,7 +33,7 @@ function show_students_commits_table($context, $course)
 
     if ($_GET['sucx']) {
         echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
-		Se obtubieron los datos correctamente.
+		Se obtuvieron los datos correctamente.
 		</div>';
     }
 
@@ -75,38 +76,74 @@ function show_students_commits_table($context, $course)
     }
     ;
 
+echo '<form method="post" action="">';
+echo '<table class="generaltable" id="repoTable">';
+echo '<thead>';
+echo '<tr class="headerrow">';
+echo '<th>Repositorio</th>';
+echo '<th>Usuario de Github</th>';
+echo '<th>Nombre Completo</th>';
+echo '<th>Fecha del Ultimo commit</th>';
+echo '<th>Cantidad de commits</th>';
+echo '<th>Líneas Agregadas</th>';
+echo '<th>Líneas eliminadas</th>';
+echo '<th>Líneas modificadas</th>';
+echo '<th>Calificación</th>';
+echo '</tr>';
+echo '</thead>';
+echo '<tbody>';
 
-    echo '<table class="generaltable" id="repoTable">';
-    echo '<thead>';
-    echo '<tr class="headerrow">';
-    echo '<th>Repositorio</th>';
-    echo '<th>Usuario de Github</th>';
-    echo '<th>Nombre Completo</th>';
-    echo '<th>Fecha del Ultimo commit</th>';
-    echo '<th>Cantidad de commits</th>';
-    echo '<th>Líneas Agregadas</th>';
-    echo '<th>Líneas eliminadas</th>';
-    echo '<th>Líneas modificadas</th>';
-    echo '</tr>';
-    echo '</thead>';
-    echo '<tbody>';
-    foreach ($student_commits as $student) {
-
+foreach ($student_commits as $student) {
+    if ($student->invitacion_enviada) {
         echo '<tr>';
         echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/graphs/contributors' target='_blank'>" . htmlspecialchars($student->reponame) . "</a></td>";
         echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/commits?author={$student->alumno_github}' target='_blank'>" . gitlogo() . htmlspecialchars($student->alumno_github) . "</a></td>";
-        //echo '<td>' . $student->alumno_github . '</td>';
-        echo '<td>' . $student->nombre_alumno . '</td>';
-        echo '<td>' . $student->fecha_ultimo_commit . '</td>';
-        echo '<td>' . $student->cantidad_commits . '</td>';
-        echo '<td>' . $student->lineas_agregadas . '</td>';
-        echo '<td>' . $student->lineas_eliminadas . '</td>';
-        echo '<td>' . $student->lineas_modificadas . '</td>';
+        echo '<td>' . htmlspecialchars($student->nombre_alumno) . '</td>';
+        echo '<td>' . htmlspecialchars($student->fecha_ultimo_commit) . '</td>';
+        echo '<td>' . htmlspecialchars($student->cantidad_commits) . '</td>';
+        echo '<td>' . htmlspecialchars($student->lineas_agregadas) . '</td>';
+        echo '<td>' . htmlspecialchars($student->lineas_eliminadas) . '</td>';
+        echo '<td>' . htmlspecialchars($student->lineas_modificadas) . '</td>';
+
+        // Menú desplegable de calificación con opción vacía
+        echo '<td>';
+        echo '<select name="calificacion[' . $student->id . ']">';
+        echo '<option value="" ' . (empty($student->calificacion_alumno) ? 'selected' : '') . '>-- Seleccionar --</option>';
+        for ($i = 1; $i <= 10; $i++) {
+            $selected = ($student->calificacion_alumno == $i) ? 'selected' : '';
+            echo "<option value='$i' $selected>$i</option>";
+        }
+        echo '</select>';
+        echo '</td>';
         echo '</tr>';
     }
-    echo '</tbody>';
-    echo '</table>';
-    echo '<hr/>';
+}
+
+echo '</tbody>';
+echo '</table>';
+echo '<button type="submit" name="guardar_calificaciones" class="btn btn-primary">Guardar Calificaciones</button>';
+echo '</form>';
+
+// Procesar el formulario y guardar las calificaciones
+if (isset($_POST['guardar_calificaciones'])) {
+    $cambio_datos = false; // Variable para rastrear si hubo cambios
+
+    foreach ($_POST['calificacion'] as $student_id => $calificacion) {
+        if ($calificacion !== '') { // Verifica que se haya seleccionado una calificación
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno');
+
+            if ($alumno_actual->calificacion_alumno != $calificacion) {
+                $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
+                $cambio_datos = true;
+            }
+        }
+    }
+
+    // Redirigir si se hicieron cambios
+    if ($cambio_datos) {
+        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')), '', 0);
+    }
+}
 }
 
 
