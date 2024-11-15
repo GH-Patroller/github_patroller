@@ -6,7 +6,6 @@
                 <!-- Datos requeridos por el moodle -->
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="ID único"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Nombre de la instacia"/>
-				<FIELD NAME="id_materia" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="ID repositorios"/>
                 <FIELD NAME="intro" TYPE="text" NOTNULL="false" COMMENT="Introducción"/>
 				<FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Formato de introducción"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Tiempo de creación"/>

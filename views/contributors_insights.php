@@ -1,15 +1,15 @@
 <?php
 
 
-function show_students_commits_table($context, $course)
+function show_students_commits_table($context, $course, $plugin_instance)
 {
-    global $DB;
     $repositories = get_all_repositories_by_courseid($course->id);
-    $owner = get_config('pluginpatroller', 'owner_patroller');
     $student_commits = [];
     $options_repos = array(
         'All' => 'Todos los Repositorios'
     );
+
+
 
     $selected_repo = isset($_GET['filterRepo']) ? $_GET['filterRepo'] : 'All';
 
@@ -17,19 +17,31 @@ function show_students_commits_table($context, $course)
         $options_repos[$key] = $value;
     };
 
-    if ($_GET['filterRepo']) {
-        update_commit_information($course->id);
+    if ($_GET['update']) {
+        update_commit_information($course->id, $plugin_instance->id);
         redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3', 'sucx' => 'true')));
     }
 
     if ($_GET['sucx']) {
         echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
-		Se obtubieron los datos correctamente.
+		Se obtuvieron los datos correctamente.
 		</div>';
     }
+    //Actualizar commits
+    echo '<form method="get" action="">
+    <input type="hidden" name="id" value="' . $context->instanceid . '">
+    <input type="hidden" name="tab" value="tab3">
+    <input type="hidden" name="update" value="true">';
+
+    echo '<div style="display: flex; justify-content: space-around; max-width: 500px;">';
+    echo '<p>Ultima actualización: ' . $plugin_instance->last_api_refresh . '</p>';
+    echo '<button type="submit" class="btn btn-primary" style="margin-right: 15px">Actualizar</button>';
+    echo '</div>';
+    echo '</form>';
 
     // Selector de curso
     echo '<div style="margin:15px">';
+    echo '<div>';
     echo '<form method="get" action="">
 			<input type="hidden" name="id" value="' . $context->instanceid . '">
 			<input type="hidden" name="tab" value="tab3">';
@@ -41,18 +53,15 @@ function show_students_commits_table($context, $course)
         'style' => 'margin-right: 55px; margin-left: 8px;'
     ));
 
-    echo '<button type="submit" class="btn btn-primary" style="margin-right: 15px">Traer Datos de GiHub</button>';
+    echo '</div>';
 
     echo '</form>';
     echo '</div>';
 
-
-
-
     foreach ($repositories as $key => $value) {
         $repo = [];
         $options_repos[$key] = $value;
-        $repo = get_students_by_repoid($key, $course->id);
+        $repo = get_students_by_repoid_and_courseid($key, $course->id);
         foreach ($repo as $student) {
             $student->repoid = $key;
             $student->reponame = $value;

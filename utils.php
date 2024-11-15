@@ -18,21 +18,27 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
-function update_commit_information($instance_id, $last_update = '1970-01-01T01:00:00Z')
+function update_commit_information($courseid, $plugin_id)
 {
     global $DB;
     // Get owner and repo from the database (values stored in $pluginpatroller)
     $token = get_config('pluginpatroller', 'token_patroller');  // Fetch the GitHub token from plugin settings in the database
     $owner = get_config('pluginpatroller', 'owner_patroller');  // Obtenemos el valor 'owner' de la base de datos
+
+    //Obtener curso instancia del plugin de la base de datos
+    $plugin_instance = $DB->get_record('pluginpatroller', array('id' => $plugin_id));
+    //Tomamos la fecha de la ultima actualizacion de la instancia del plugin 
+    $last_update = $plugin_instance->last_api_refresh == "" ? '1970-01-01T01:00:00Z' : $plugin_instance->last_api_refresh;
+    //Establish current date 
+    $date = date('Y-m-d') . 'T' . date('H:i:s') . '-03:00';
+
     // BEGIN GitHub API Script
-    $repo_list = get_all_repositories_by_courseid($instance_id);
-    //Establish date for commit retrieval
-    $date = date('Y-m-d') . 'T' . date('H:i:s') . 'Z';
+    //Buscamos todos los repositorios por id de curso
+    $repo_list = get_all_repositories_by_courseid($courseid);
 
     foreach ($repo_list as $repo_id => $repo_name) {
         // URL de la API de GitHub para obtener commits por repositorio
-        $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo_name . '+author-date:' . $last_update . '..' . $date . '+sort:author-date-desc';
-
+        $commits_url = 'https://api.github.com/search/commits?q=repo:' . $owner . '/' . $repo_name . '+author-date:>=' . $last_update . '+sort:author-date-desc';
         // Iniciar cURL
         $ch_commits = curl_init($commits_url);
         // Configurar las opciones de cURL
@@ -42,7 +48,6 @@ function update_commit_information($instance_id, $last_update = '1970-01-01T01:0
             'Authorization: Bearer ' . $token,   // Usar el token aquí
             'User-Agent: GitHub-API-Request'    // GitHub requiere un "User-Agent" en la solicitud
         ]);
-
 
         // Ejecutar la solicitud y obtener la respuesta
         $commits_response = curl_exec($ch_commits);
@@ -96,27 +101,19 @@ function update_commit_information($instance_id, $last_update = '1970-01-01T01:0
             curl_close($ch_commits);
 
             //Actualizar los registros de los estudiantes con la información apropiada
-            $students = get_students_by_repoid($repo_id);
-            foreach ($commiter_array as $commiter_name => $commiter) {
+            $students = get_students_by_repoid_and_courseid($repo_id, $courseid);
+            foreach ($commiter_array as $commiter_name => $commiter_info) {
                 foreach ($students as $student) {
                     if ($commiter_name == $student->alumno_github && $student->id_repos == $repo_id) {
                         $DB->update_record(
                             'alumnos_data_patroller',
                             [
                                 'id' => $student->id,
-                                'fecha_ultimo_commit' => $commiter['last_commit'],
-                                'cantidad_commits' => $student->cantidad_commits + $commiter['total_commits'],
-                                'lineas_agregadas' => $student->lineas_agregadas + $commiter['total_added'],
-                                'lineas_eliminadas' => $student->lineas_eliminadas + $commiter['total_deleted'],
-                                'lineas_modificadas' => $student->lineas_modificadas + $commiter['total_modified']
-                            ],
-                            $bulk = false
-                        );
-                        $DB->update_record(
-                            'pluginpatroller',
-                            [
-                                'id' => $instance_id,
-                                'last_api_refresh' =>  date('Y-m-d') . 'T' . date('H:i:s') . 'Z'
+                                'fecha_ultimo_commit' => $commiter_info['last_commit'],
+                                'cantidad_commits' => $student->cantidad_commits + $commiter_info['total_commits'],
+                                'lineas_agregadas' => $student->lineas_agregadas + $commiter_info['total_added'],
+                                'lineas_eliminadas' => $student->lineas_eliminadas + $commiter_info['total_deleted'],
+                                'lineas_modificadas' => $student->lineas_modificadas + $commiter_info['total_modified']
                             ],
                             $bulk = false
                         );
@@ -126,6 +123,14 @@ function update_commit_information($instance_id, $last_update = '1970-01-01T01:0
             }
         }
     }
+    $DB->update_record(
+        'pluginpatroller',
+        [
+            'id' => $plugin_instance->id,
+            'last_api_refresh' =>  $date
+        ],
+        $bulk = false
+    );
 }
 
 function get_all_repositories_by_courseid($courseid)
@@ -140,7 +145,7 @@ function get_all_repositories_by_courseid($courseid)
     return $resultado;
 }
 
-function get_students_by_repoid($repo_id, $courseid)
+function get_students_by_repoid_and_courseid($repo_id, $courseid)
 {
     global $DB;
 
@@ -340,7 +345,7 @@ function invite_students_by_repo_name_list($repo_list, $courseid)
     $token = get_config('pluginpatroller', 'token_patroller');
 
     foreach ($repo_list as $repo_id => $repo_name) {
-        $student_list = get_students_by_repoid($repo_id, $courseid);
+        $student_list = get_students_by_repoid_and_courseid($repo_id, $courseid);
         foreach ($student_list as $student) {
             if ($student->invitacion_enviada == 0) {
                 $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;

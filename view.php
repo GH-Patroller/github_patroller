@@ -74,7 +74,7 @@ switch ($tab) {
         break;
     case 'tab3':
         if (!$is_student) {
-            show_students_commits_table($context, $course);
+            show_students_commits_table($context, $course, $pluginpatroller);
         }
         break;
     case 'tab4':
