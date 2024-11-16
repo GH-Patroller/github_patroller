@@ -39,16 +39,20 @@ $roleStudentid = 5;
 
 // Verificar si el usuario tiene el rol de estudiante en el contexto actual
 $is_student = user_has_role_assignment($USER->id, $roleStudentid, $context->id);
+$data = $DB->get_records('repos_data_patroller', array('id_materia' => $course->id));
 
 // Definir las pestañas
 $tabrows = array();
 if (!$is_student) {
     $tabrows[] = new tabobject('tab1', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab1')), 'Crear Repositorios');
 }
-$tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Github Patroller');
-if (!$is_student) {
-    $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Contributors Insights');
+if ($data) {
+    $tabrows[] = new tabobject('tab2', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab2')), 'Alumnos Github Patroller');
+    if (!$is_student) {
+        $tabrows[] = new tabobject('tab3', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab3')), 'Contributors Insights');
+    }
 }
+
 if (!$is_student) {
     $tabrows[] = new tabobject('tab4', new moodle_url('/mod/pluginpatroller/view.php', array('id' => $id, 'tab' => 'tab4')), 'Alumnos Inscriptos');
 }
@@ -66,15 +70,19 @@ switch ($tab) {
         }
         break;
     case 'tab2':
-        if ($is_student) {
-            mostrar_alumnos_inscritos_plugin_alumno($context, $course);
-        } else {
-            mostrar_alumnos_inscritos_plugin($context, $course);
+        if ($data) {
+            if ($is_student) {
+                mostrar_alumnos_inscritos_plugin_alumno($context, $course);
+            } else {
+                mostrar_alumnos_inscritos_plugin($context, $course);
+            }
         }
         break;
     case 'tab3':
-        if (!$is_student) {
-            show_students_commits_table($context, $course, $pluginpatroller);
+        if ($data) {
+            if (!$is_student) {
+                show_students_commits_table($context, $course);
+            }
         }
         break;
     case 'tab4':

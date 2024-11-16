@@ -7,7 +7,13 @@ function pluginpatroller_add_instance($pluginpatroller) {
     $pluginpatroller->timecreated = time();
     $pluginpatroller->timemodified = time();
 
-    return $DB->insert_record('pluginpatroller', $pluginpatroller);
+    // Insert the activity into the database
+    $pluginpatroller->id = $DB->insert_record('pluginpatroller', $pluginpatroller);
+
+    // Create grade item for the activity
+    pluginpatroller_grade_item_update($pluginpatroller);
+
+    return $pluginpatroller->id;
 }
 
 function pluginpatroller_update_instance($pluginpatroller) {
@@ -16,8 +22,8 @@ function pluginpatroller_update_instance($pluginpatroller) {
     $pluginpatroller->timemodified = time();
     $pluginpatroller->id = $pluginpatroller->instance;
 
-    // Obtener el contexto del módulo de actividad
-    $context = context_module::instance($pluginpatroller->coursemodule);
+    // Update grade item
+    pluginpatroller_grade_item_update($pluginpatroller);
 
     return $DB->update_record('pluginpatroller', $pluginpatroller);
 }
@@ -35,3 +41,13 @@ function pluginpatroller_extend_settings_navigation(settings_navigation $setting
 
 }
 
+// Function to create or update the grade item in Moodle's Gradebook
+function pluginpatroller_grade_item_update($pluginpatroller, $maxgrade = 10) {
+    $item = array(
+        'itemname' => $pluginpatroller->name,
+        'gradetype' => GRADE_TYPE_VALUE,
+        'grademax' => $maxgrade,
+        'grademin' => 0,
+    );
+    grade_update('mod/pluginpatroller', $pluginpatroller->course, 'mod', 'pluginpatroller', $pluginpatroller->id, 0, null, $item);
+}
