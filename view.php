@@ -81,7 +81,7 @@ switch ($tab) {
     case 'tab3':
         if ($data) {
             if (!$is_student) {
-                show_students_commits_table($context, $course);
+                show_students_commits_table($context, $course, $pluginpatroller);
             }
         }
         break;
