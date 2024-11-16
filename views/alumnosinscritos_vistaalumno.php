@@ -21,9 +21,7 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
         $repositorio_id = clean_param($_POST['repositorio'], PARAM_INT);
         $github_username = clean_param($_POST['github_username'], PARAM_TEXT);
         $cambio_datos = false;
-        echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
-    Sus datos han sido guardados exitosamente.
-	</div>';
+
         // Obtener los valores actuales de id_repos y alumno_github del alumno
         $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $alumno_id, 'id_materia' => $course->id], 'id_repos, alumno_github');
 
@@ -134,3 +132,4 @@ function mostrar_alumnos_inscritos_plugin_alumno($context, $course)
     echo '</tbody>';
     echo '</table>';
 }
+?>

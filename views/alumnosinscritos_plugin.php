@@ -52,32 +52,6 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
     echo '<h2>Lista de Alumnos Inscriptos a Github Patroller</h2>';
     filter_sede_curso($course);
 
-    // Verificar si ya hay datos en la tabla alumnos_data_patroller
-    $hay_datos = $DB->get_records('alumnos_data_patroller', array('id_materia' => $course->id));
-
-    // Mostrar el botón solo si no hay datos en la tabla
-    if (empty($hay_datos)) {
-        echo '<form method="post" action="">
-                <button type="submit" name="cargar_alumnos" class="btn btn-primary">Cargar Alumnos</button>
-              </form>';
-    }
-
-    // Si se envía el formulario, insertar los alumnos en la tabla
-    if (isset($_POST['cargar_alumnos'])) {
-        $enrolled_users = get_enrolled_users($context);
-
-        foreach ($enrolled_users as $user) {
-            $data = new stdClass();
-            $data->nombre_alumno = $user->firstname . ' ' . $user->lastname;
-            $data->mail_alumno = $user->email;
-            $data->id_alumno = $user->id;
-            $data->id_materia = $course->id;
-            $DB->insert_record('alumnos_data_patroller', $data);
-        }
-
-        // Redirigir para evitar múltiples envíos del formulario al recargar la página
-        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')));
-    }
 
     // Mostrar la tabla de alumnos inscritos
     echo '<form method="post" action="">';
