@@ -42,7 +42,7 @@ function pluginpatroller_extend_settings_navigation(settings_navigation $setting
 }
 
 // Function to create or update the grade item in Moodle's Gradebook
-function pluginpatroller_grade_item_update($pluginpatroller, $maxgrade = 100) {
+function pluginpatroller_grade_item_update($pluginpatroller, $maxgrade = 10) {
     $item = array(
         'itemname' => $pluginpatroller->name,
         'gradetype' => GRADE_TYPE_VALUE,
