@@ -47,7 +47,7 @@ function show_students_commits_table($context, $course, $plugin_instance)
     echo '</form>';
 
     // Selector de curso
-    echo '<div style="margin:15px; display: flex; justify-content: space-around; max-width: 600px;">';
+    echo '<div style="margin:15px; display: flex; justify-content: space-around; max-width: 700px;">';
     echo '<div>';
     echo '<form method="get" action="">
 			<input type="hidden" name="id" value="' . $context->instanceid . '">
