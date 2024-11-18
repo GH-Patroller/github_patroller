@@ -3,8 +3,8 @@
 function mostrar_alumnos_inscritos_plugin($context, $course)
 {
     global $DB;
-    $repositories = get_all_repositories_by_courseid($course->id);
-   
+    $repositories = get_all_repositories_by_course_id($course->id);
+
 
     $options_repos = array(
         'All' => 'Todos los Repositorios',
@@ -26,7 +26,6 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
 </div>';
 
         invite_students_by_repo_name_list($repo_list, $course->id);
-
     }
 
     foreach ($repositories as $key => $value) {
@@ -123,7 +122,6 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
                 echo '</select>';
                 echo '</td>';
             }
-
         }
 
         echo '</tbody>';
@@ -169,6 +167,4 @@ function mostrar_alumnos_inscritos_plugin($context, $course)
             redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab2')), '', 0);
         }
     }
-
 }
-?>
