@@ -18,7 +18,7 @@ require_once('lib.php'); // Si tienes funciones específicas de tu plugin, aquí
 
 defined('MOODLE_INTERNAL') || die();
 
-function update_commit_information($courseid, $plugin_id)
+function update_commit_information($course_id, $plugin_id)
 {
     global $DB;
     // Get owner and repo from the database (values stored in $pluginpatroller)
@@ -34,7 +34,7 @@ function update_commit_information($courseid, $plugin_id)
 
     // BEGIN GitHub API Script
     //Buscamos todos los repositorios por id de curso
-    $repo_list = get_all_repositories_by_courseid($courseid);
+    $repo_list = get_all_repositories_by_course_id($course_id);
 
     foreach ($repo_list as $repo_id => $repo_name) {
         // URL de la API de GitHub para obtener commits por repositorio
@@ -101,7 +101,7 @@ function update_commit_information($courseid, $plugin_id)
             curl_close($ch_commits);
 
             //Actualizar los registros de los estudiantes con la información apropiada
-            $students = get_students_by_repoid_and_courseid($repo_id, $courseid);
+            $students = get_students_by_repoid_and_course_id($repo_id, $course_id);
             foreach ($commiter_array as $commiter_name => $commiter_info) {
                 foreach ($students as $student) {
                     if ($commiter_name == $student->alumno_github && $student->id_repos == $repo_id) {
@@ -133,11 +133,11 @@ function update_commit_information($courseid, $plugin_id)
     );
 }
 
-function get_all_repositories_by_courseid($courseid)
+function get_all_repositories_by_course_id($course_id)
 {
     global $DB;
 
-    $repositorios = $DB->get_records('repos_data_patroller', array('id_materia' => $courseid));
+    $repositorios = $DB->get_records('repos_data_patroller', array('id_materia' => $course_id));
     $resultado = [];
     foreach ($repositorios as $repositorio) {
         $resultado[$repositorio->id] = $repositorio->nombre_repo;
@@ -145,11 +145,11 @@ function get_all_repositories_by_courseid($courseid)
     return $resultado;
 }
 
-function get_students_by_repoid_and_courseid($repo_id, $courseid)
+function get_students_by_repoid_and_course_id($repo_id, $course_id)
 {
     global $DB;
 
-    $resultado = $DB->get_records('alumnos_data_patroller', ['id_repos' => $repo_id, 'id_materia' => $courseid]);
+    $resultado = $DB->get_records('alumnos_data_patroller', ['id_repos' => $repo_id, 'id_materia' => $course_id]);
 
     return $resultado;
 }
@@ -274,12 +274,12 @@ function get_grupo_by_user($course, $user)
     return $grupo;
 }
 
-function get_all_cursos_by_courseid($courseid)
+function get_all_cursos_by_course_id($course_id)
 {
     global $DB;
 
     $cursos = [];
-    $groups = groups_get_all_groups($courseid);
+    $groups = groups_get_all_groups($course_id);
     foreach ($groups as $group) {
         if (preg_match('/^(BE|YA)/', $group->name)) { // Filtra grupos que empiezan con "BE" o "YA"
             $last_letter = substr($group->name, -1); // Obtiene la última letra del nombre del grupo
@@ -304,7 +304,7 @@ function filter_sede_curso($course)
     echo html_writer::select($options_sede, 'filterSede', '', null, array('id' => 'filterSede', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
 
     // Selector de curso
-    $options_curso = array_merge(get_all_cursos_by_courseid($course->id), ["" => "All"]);
+    $options_curso = array_merge(get_all_cursos_by_course_id($course->id), ["" => "All"]);
     echo '<label for="filterCurso" style="margin-right: 15px;">' . get_string('filterbycurso', 'pluginpatroller') . ':</label>';
     echo html_writer::select($options_curso, 'filterCurso', '', null, array('id' => 'filterCurso', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
 
@@ -336,7 +336,7 @@ function filter_sede_curso($course)
     </script>';
 }
 
-function invite_students_by_repo_name_list($repo_list, $courseid)
+function invite_students_by_repo_name_list($repo_list, $course_id)
 {
     global $DB;
     $student_list = [];
@@ -345,7 +345,7 @@ function invite_students_by_repo_name_list($repo_list, $courseid)
     $token = get_config('pluginpatroller', 'token_patroller');
 
     foreach ($repo_list as $repo_id => $repo_name) {
-        $student_list = get_students_by_repoid_and_courseid($repo_id, $courseid);
+        $student_list = get_students_by_repoid_and_course_id($repo_id, $course_id);
         foreach ($student_list as $student) {
             if ($student->invitacion_enviada == 0) {
                 $student_invitation_url = 'https://api.github.com/repos/' . $owner . '/' . $repo_name . '/collaborators/' . $student->alumno_github;

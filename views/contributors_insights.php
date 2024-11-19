@@ -1,60 +1,69 @@
 <?php
 
 
-function show_students_commits_table($context, $course)
+function show_students_commits_table($context, $course, $plugin_instance)
 {
-    global $DB; // Asegúrate de tener acceso global al DB
-    $repositories = get_all_repositories_by_courseid($course->id);
+    global $DB;
+    $repositories = get_all_repositories_by_course_id($course->id);
     $student_commits = [];
     $options_repos = array(
         'All' => 'Todos los Repositorios'
     );
 
+
+
     $selected_repo = isset($_GET['filterRepo']) ? $_GET['filterRepo'] : 'All';
 
     foreach ($repositories as $key => $value) {
         $options_repos[$key] = $value;
-    }
-    ;
+    };
 
-    if ($_GET['filterRepo']) {
-        if ($selected_repo == 'All') {
-            foreach ($repositories as $key => $value) {
-                get_commit_information_by_repo_name($key, $value, $course->id);
-            }
-        } else {
-            get_commit_information_by_repo_name($selected_repo, $repositories[$selected_repo], $course->id);
-        }
-
-
+    if ($_GET['update']) {
+        echo '<div style="background-color: #add8e6; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
+		Este proceso puede tomar unos minutos, por favor aguarde un momento.
+		</div>';
+        update_commit_information($course->id, $plugin_instance->id);
         redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3', 'sucx' => 'true')));
-
     }
+
 
     if ($_GET['sucx']) {
         echo '<div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
 		Se obtuvieron los datos correctamente.
 		</div>';
+        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')));
     }
 
+    //Actualizar commits
+    echo '<form method="get" action="">
+    <input type="hidden" name="id" value="' . $context->instanceid . '">
+    <input type="hidden" name="tab" value="tab3">
+    <input type="hidden" name="update" value="true">';
+
+    echo '<div style="display: flex; justify-content: space-around; max-width: 500px;">';
+    echo '<p>Última actualización: ' . $plugin_instance->last_api_refresh . '</p>';
+    echo '<button type="submit" class="btn btn-primary" style="margin-right: 15px">Actualizar</button>';
+    echo '</div>';
+    echo '</form>';
+
     // Selector de curso
-    //$options_repo = array_merge($repositories, ["" => "All"]);
-    echo '<div style="margin:15px">';
+    echo '<div style="margin:15px; display: flex; justify-content: space-around; max-width: 700px;">';
+    echo '<div>';
     echo '<form method="get" action="">
 			<input type="hidden" name="id" value="' . $context->instanceid . '">
 			<input type="hidden" name="tab" value="tab3">';
 
     echo '<label for="filterRepo" style="margin-right: 15px;">' . get_string('filterbyrepo', 'pluginpatroller') . ':</label>';
-    //echo html_writer::select($options_repos, 'filterRepo', '', null, array('id' => 'filterRepo', 'onchange' => 'filterTable()', 'style' => 'margin-right: 55px; margin-left: 8px;'));
     echo html_writer::select($options_repos, 'filterRepo', $selected_repo, null, array(
         'id' => 'filterRepo',
         'onchange' => 'filterTable()',
         'style' => 'margin-right: 55px; margin-left: 8px;'
     ));
 
-    echo '<button type="submit" class="btn btn-primary" style="margin-right: 15px">Traer Datos de GiHub</button>';
+    echo '</div>';
 
     echo '</form>';
+    echo '<p id="averageCommits">Commits promedio por estudiante: -</p>';
     echo '</div>';
 
 
@@ -63,94 +72,108 @@ function show_students_commits_table($context, $course)
     foreach ($repositories as $key => $value) {
         $repo = [];
         $options_repos[$key] = $value;
-        $repo = get_students_by_repoid($key, $course->id);
+        $repo = get_students_by_repoid_and_course_id($key, $course->id);
         foreach ($repo as $student) {
             $student->repoid = $key;
             $student->reponame = $value;
         }
-        //		echo "<pre>";
-        //	var_dump($repo);
         $student_commits = array_merge($student_commits, $repo);
+    };
 
-
-    }
-    ;
-
-echo '<form method="post" action="">';
-echo '<table class="generaltable" id="repoTable">';
-echo '<thead>';
-echo '<tr class="headerrow">';
-echo '<th>Repositorio</th>';
-echo '<th>Usuario de Github</th>';
-echo '<th>Nombre Completo</th>';
-echo '<th>Fecha del Ultimo commit</th>';
-echo '<th>Cantidad de commits</th>';
-echo '<th>Líneas Agregadas</th>';
-echo '<th>Líneas eliminadas</th>';
-echo '<th>Líneas modificadas</th>';
-echo '<th>Calificación</th>';
-echo '</tr>';
-echo '</thead>';
-echo '<tbody>';
-
-foreach ($student_commits as $student) {
-    if($student->invitacion_enviada){
-    echo '<tr>';
-    echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/graphs/contributors' target='_blank'>" . htmlspecialchars($student->reponame) . "</a></td>";
-    echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/commits?author={$student->alumno_github}' target='_blank'>" . gitlogo() . htmlspecialchars($student->alumno_github) . "</a></td>";
-    echo '<td>' . htmlspecialchars($student->nombre_alumno) . '</td>';
-    echo '<td>' . htmlspecialchars($student->fecha_ultimo_commit) . '</td>';
-    echo '<td>' . htmlspecialchars($student->cantidad_commits) . '</td>';
-    echo '<td>' . htmlspecialchars($student->lineas_agregadas) . '</td>';
-    echo '<td>' . htmlspecialchars($student->lineas_eliminadas) . '</td>';
-    echo '<td>' . htmlspecialchars($student->lineas_modificadas) . '</td>';
-
-    // Menú desplegable de calificación
-    echo '<td>';
-    echo '<select name="calificacion[' . $student->id . ']">';
-    for ($i = 1; $i <= 10; $i++) {
-        $selected = ($student->calificacion_alumno == $i) ? 'selected' : '';
-        echo "<option value='$i' $selected>$i</option>";
-    }
-    echo '</select>';
-    echo '</td>';
+    echo '<form method="post" action="">';
+    echo '<table class="generaltable" id="repoTable">';
+    echo '<thead>';
+    echo '<tr class="headerrow">';
+    echo '<th>Repositorio</th>';
+    echo '<th>Usuario de Github</th>';
+    echo '<th>Nombre Completo</th>';
+    echo '<th>Fecha del Ultimo commit</th>';
+    echo '<th>Cantidad de commits</th>';
+    echo '<th>Líneas Agregadas</th>';
+    echo '<th>Líneas eliminadas</th>';
+    echo '<th>Líneas modificadas</th>';
+    echo '<th>Calificación</th>';
     echo '</tr>';
-}
-}
+    echo '</thead>';
+    echo '<tbody>';
 
-echo '</tbody>';
-echo '</table>';
-echo '<button type="submit" name="guardar_calificaciones" class="btn btn-primary">Guardar Calificaciones</button>';
-echo '</form>';
+    foreach ($student_commits as $student) {
+        if ($student->invitacion_enviada) {
+            echo '<tr>';
+            echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/graphs/contributors' target='_blank'>" . htmlspecialchars($student->reponame) . "</a></td>";
+            echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/commits?author={$student->alumno_github}' target='_blank'>" . gitlogo() . htmlspecialchars($student->alumno_github) . "</a></td>";
+            echo '<td>' . htmlspecialchars($student->nombre_alumno) . '</td>';
+            echo '<td>' . htmlspecialchars($student->fecha_ultimo_commit) . '</td>';
+            echo '<td>' . htmlspecialchars($student->cantidad_commits) . '</td>';
+            echo '<td>' . htmlspecialchars($student->lineas_agregadas) . '</td>';
+            echo '<td>' . htmlspecialchars($student->lineas_eliminadas) . '</td>';
+            echo '<td>' . htmlspecialchars($student->lineas_modificadas) . '</td>';
 
-// Procesar el formulario y guardar las calificaciones
-if (isset($_POST['guardar_calificaciones'])) {
-    $cambio_datos = false; // Variable para rastrear si hubo cambios
-
-    // Actualizar calificaciones
-    foreach ($_POST['calificacion'] as $student_id => $calificacion) {
-        $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno');
-
-        if ($alumno_actual->calificacion_alumno != $calificacion) {
-            $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
-            $cambio_datos = true;
-            
-			$grade = new stdClass();
-			$grade->userid = $student_id;
-			$grade->rawgrade = $calificacion;
-			grade_update('mod/pluginpatroller', $course->id, 'mod', 'pluginpatroller', $pluginpatroller->id, $student_id, $grade);
-
+            // Menú desplegable de calificación
+            echo '<td>';
+            echo '<select name="calificacion[' . $student->id . ']">';
+            for ($i = 1; $i <= 10; $i++) {
+                $selected = ($student->calificacion_alumno == $i) ? 'selected' : '';
+                echo "<option value='$i' $selected>$i</option>";
+            }
+            echo '</select>';
+            echo '</td>';
+            echo '</tr>';
         }
     }
 
+    echo '</tbody>';
+    echo '</table>';
+    echo '<button type="submit" name="guardar_calificaciones" class="btn btn-primary">Guardar Calificaciones</button>';
+    echo '</form>';
+
+    // Procesar el formulario y guardar las calificaciones
+    if (isset($_POST['guardar_calificaciones'])) {
+        $cambio_datos = false; // Variable para rastrear si hubo cambios
+
+        // Actualizar calificaciones
+        foreach ($_POST['calificacion'] as $student_id => $calificacion) {
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno, id_alumno');
+
+            if ($alumno_actual->calificacion_alumno != $calificacion) {
+                $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
+                $cambio_datos = true;
+
+				$resulato = $DB->get_record('grade_items', ['courseid' => $course->id, 'itemname' => $plugin_instance->name]);
+
+                $grade = new stdClass();
+                $grade->userid = $alumno_actual->id_alumno;
+                $grade->rawgrade = $calificacion;
+/*				
+				$source = 'mod/pluginpatroller';
+				$courseid = $course->id;
+				$itemtype = 'mod';
+				$itemmodule = 'pluginpatroller';
+				$iteminstance = $resulato->id;
+				$itemnumber
+				$grades (opcional)
+				$itemdetails (opcional)
+*/
+				$source = 'mod/pluginpatroller';
+				$courseid = $resulato->courseid;
+				$itemtype = $resulato->itemtype;
+				$itemmodule = $resulato->itemmodule;
+				$iteminstance = $resulato->iteminstance;
+				$itemnumber = $resulato->itemnumber;
+
+                grade_update($source, $courseid, $itemtype, $itemmodule, $iteminstance, $itemnumber, $grade);
+				
+                //grade_update('mod/pluginpatroller', $course->id, 'mod', 'pluginpatroller', $pluginpatroller->id, $alumno_actual->id_alumno, $grade);
+            }
+        }
 
 
-    // Redirigir si se hicieron cambios
-    if ($cambio_datos) {
-        redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')), '', 0);
-}
 
-}
+        // Redirigir si se hicieron cambios
+        if ($cambio_datos) {
+            redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')), '', 0);
+        }
+    }
 }
 
 
@@ -160,12 +183,19 @@ echo '<script>
         // Crear el mapeo dinámico desde el <select>
         var selectElement = document.getElementById("filterRepo");
         var repoMapping = {};
+
         for (var i = 0; i < selectElement.options.length; i++) {
             var key = selectElement.options[i].value;
             var value = selectElement.options[i].text;
             repoMapping[key] = value;
         }
 
+        //Creamos variables para calcular el promedio de commits por estudiante
+        var averageCommitText = document.getElementById("averageCommits");
+        var totalCommits = 0;
+        var totalStudentsShown = 0;
+        
+        //Creamos variables para filtrar la table
         var cursoFilter = selectElement.value; // Obtiene el valor seleccionado
         var table = document.getElementById("repoTable");
         var tr = table.getElementsByTagName("tr");
@@ -179,11 +209,15 @@ echo '<script>
                 // Si "All" está seleccionado o coincide con el nombre del repositorio, muestra la fila
                 if (cursoFilter === "All" || repoValue === repoMapping[cursoFilter]) {
                     tr[i].style.display = "";
+                    totalCommits += parseInt(tr[i].getElementsByTagName("td")[4].innerHTML); //Sumamos el campo de "Cantidad de Commits" al total
+                    totalStudentsShown++ //Sumamos 1 a la cantidad total de estudiantes mostrados
                 } else {
                     tr[i].style.display = "none";
                 }
             }
         }
+        //Actualizamos el promedio de commits si la cantidad de alumnos asignados al repo es diferente de 0 
+        averageCommitText.innerText = "Commits promedio por estudiante: " + (totalStudentsShown != 0 ? totalCommits/totalStudentsShown : 0);
     }
 	
 	    // Ejecutar filterTable al cargar la página si hay un valor en el select
@@ -195,6 +229,7 @@ echo '<script>
     };
 </script>
 ';
+
 
 function gitlogo()
 {
