@@ -19,10 +19,10 @@ function show_students_commits_table($context, $course, $plugin_instance)
     };
 
     if ($_GET['update']) {
-        update_commit_information($course->id, $plugin_instance->id);
         echo '<div style="background-color: #add8e6; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
 		Este proceso puede tomar unos minutos, por favor aguarde un momento.
 		</div>';
+        update_commit_information($course->id, $plugin_instance->id);
         redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3', 'sucx' => 'true')));
     }
 
@@ -133,16 +133,37 @@ function show_students_commits_table($context, $course, $plugin_instance)
 
         // Actualizar calificaciones
         foreach ($_POST['calificacion'] as $student_id => $calificacion) {
-            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno');
+            $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno, id_alumno');
 
             if ($alumno_actual->calificacion_alumno != $calificacion) {
                 $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
                 $cambio_datos = true;
 
+				$resulato = $DB->get_record('grade_items', ['courseid' => $course->id, 'itemname' => $plugin_instance->name]);
+
                 $grade = new stdClass();
-                $grade->userid = $student_id;
+                $grade->userid = $alumno_actual->id_alumno;
                 $grade->rawgrade = $calificacion;
-                grade_update('mod/pluginpatroller', $course->id, 'mod', 'pluginpatroller', $pluginpatroller->id, $student_id, $grade);
+/*				
+				$source = 'mod/pluginpatroller';
+				$courseid = $course->id;
+				$itemtype = 'mod';
+				$itemmodule = 'pluginpatroller';
+				$iteminstance = $resulato->id;
+				$itemnumber
+				$grades (opcional)
+				$itemdetails (opcional)
+*/
+				$source = 'mod/pluginpatroller';
+				$courseid = $resulato->courseid;
+				$itemtype = $resulato->itemtype;
+				$itemmodule = $resulato->itemmodule;
+				$iteminstance = $resulato->iteminstance;
+				$itemnumber = $resulato->itemnumber;
+
+                grade_update($source, $courseid, $itemtype, $itemmodule, $iteminstance, $itemnumber, $grade);
+				
+                //grade_update('mod/pluginpatroller', $course->id, 'mod', 'pluginpatroller', $pluginpatroller->id, $alumno_actual->id_alumno, $grade);
             }
         }
 
