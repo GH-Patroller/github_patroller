@@ -112,6 +112,12 @@ function show_students_commits_table($context, $course, $plugin_instance)
             // Menú desplegable de calificación
             echo '<td>';
             echo '<select name="calificacion[' . $student->id . ']">';
+                
+            // Opción predeterminada "Seleccionar" cuando la calificación está vacía
+            $selected_default = empty($student->calificacion_alumno) ? 'selected' : '';
+            echo "<option value='' $selected_default>Seleccionar nota</option>";
+                
+            // Opciones de calificación del 1 al 10
             for ($i = 1; $i <= 10; $i++) {
                 $selected = ($student->calificacion_alumno == $i) ? 'selected' : '';
                 echo "<option value='$i' $selected>$i</option>";
@@ -130,53 +136,47 @@ function show_students_commits_table($context, $course, $plugin_instance)
     // Procesar el formulario y guardar las calificaciones
     if (isset($_POST['guardar_calificaciones'])) {
         $cambio_datos = false; // Variable para rastrear si hubo cambios
-
+    
         // Actualizar calificaciones
         foreach ($_POST['calificacion'] as $student_id => $calificacion) {
             $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno, id_alumno');
-
+    
+            // Si la calificación actual es diferente de la nueva o si es vacía, actualiza
             if ($alumno_actual->calificacion_alumno != $calificacion) {
-                $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
+                if ($calificacion === '') {
+                    // Asigna NULL si el valor es vacío
+                    $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', null, ['id' => $student_id, 'id_materia' => $course->id]);
+                } else {
+                    // Asigna el valor seleccionado
+                    $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
+                }
                 $cambio_datos = true;
-
-				$resulato = $DB->get_record('grade_items', ['courseid' => $course->id, 'itemname' => $plugin_instance->name]);
-
+    
+                // Obtener el elemento de calificación en Moodle Gradebook
+                $resultado = $DB->get_record('grade_items', ['courseid' => $course->id, 'itemname' => $plugin_instance->name]);
+    
                 $grade = new stdClass();
                 $grade->userid = $alumno_actual->id_alumno;
-                $grade->rawgrade = $calificacion;
-/*				
-				$source = 'mod/pluginpatroller';
-				$courseid = $course->id;
-				$itemtype = 'mod';
-				$itemmodule = 'pluginpatroller';
-				$iteminstance = $resulato->id;
-				$itemnumber
-				$grades (opcional)
-				$itemdetails (opcional)
-*/
-				$source = 'mod/pluginpatroller';
-				$courseid = $resulato->courseid;
-				$itemtype = $resulato->itemtype;
-				$itemmodule = $resulato->itemmodule;
-				$iteminstance = $resulato->iteminstance;
-				$itemnumber = $resulato->itemnumber;
-
+                $grade->rawgrade = $calificacion === '' ? null : $calificacion; // Asigna null si la calificación está vacía
+    
+                $source = 'mod/pluginpatroller';
+                $courseid = $resultado->courseid;
+                $itemtype = $resultado->itemtype;
+                $itemmodule = $resultado->itemmodule;
+                $iteminstance = $resultado->iteminstance;
+                $itemnumber = $resultado->itemnumber;
+    
+                // Actualiza la calificación en Moodle Gradebook
                 grade_update($source, $courseid, $itemtype, $itemmodule, $iteminstance, $itemnumber, $grade);
-				
-                //grade_update('mod/pluginpatroller', $course->id, 'mod', 'pluginpatroller', $pluginpatroller->id, $alumno_actual->id_alumno, $grade);
             }
         }
-
-
-
+    
         // Redirigir si se hicieron cambios
         if ($cambio_datos) {
             redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')), '', 0);
         }
     }
 }
-
-
 // JavaScript de la función filterTable
 echo '<script>
     function filterTable() {
