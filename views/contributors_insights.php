@@ -41,7 +41,7 @@ function show_students_commits_table($context, $course, $plugin_instance)
     <input type="hidden" name="update" value="true">';
 
     echo '<div style="display: flex; justify-content: space-around; max-width: 500px;">';
-    echo '<p>Última actualización: ' . $plugin_instance->last_api_refresh . '</p>';
+    echo '<p>Última actualización: ' . str_replace(array("T", "-03:00"), " ", $plugin_instance->last_api_refresh) . '</p>';
     echo '<button type="submit" class="btn btn-primary" style="margin-right: 15px">Actualizar</button>';
     echo '</div>';
     echo '</form>';
@@ -103,7 +103,7 @@ function show_students_commits_table($context, $course, $plugin_instance)
             echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/graphs/contributors' target='_blank'>" . htmlspecialchars($student->reponame) . "</a></td>";
             echo "<td><a href='https://github.com/GHPatroller/{$student->reponame}/commits?author={$student->alumno_github}' target='_blank'>" . gitlogo() . htmlspecialchars($student->alumno_github) . "</a></td>";
             echo '<td>' . htmlspecialchars($student->nombre_alumno) . '</td>';
-            echo '<td>' . htmlspecialchars($student->fecha_ultimo_commit) . '</td>';
+            echo '<td>' . htmlspecialchars(str_replace("T", " ", $student->fecha_ultimo_commit)) . '</td>';
             echo '<td>' . htmlspecialchars($student->cantidad_commits) . '</td>';
             echo '<td>' . htmlspecialchars($student->lineas_agregadas) . '</td>';
             echo '<td>' . htmlspecialchars($student->lineas_eliminadas) . '</td>';
@@ -112,11 +112,11 @@ function show_students_commits_table($context, $course, $plugin_instance)
             // Menú desplegable de calificación
             echo '<td>';
             echo '<select name="calificacion[' . $student->id . ']">';
-                
+
             // Opción predeterminada "Seleccionar" cuando la calificación está vacía
             $selected_default = empty($student->calificacion_alumno) ? 'selected' : '';
             echo "<option value='' $selected_default>Seleccionar nota</option>";
-                
+
             // Opciones de calificación del 1 al 10
             for ($i = 1; $i <= 10; $i++) {
                 $selected = ($student->calificacion_alumno == $i) ? 'selected' : '';
@@ -136,11 +136,11 @@ function show_students_commits_table($context, $course, $plugin_instance)
     // Procesar el formulario y guardar las calificaciones
     if (isset($_POST['guardar_calificaciones'])) {
         $cambio_datos = false; // Variable para rastrear si hubo cambios
-    
+
         // Actualizar calificaciones
         foreach ($_POST['calificacion'] as $student_id => $calificacion) {
             $alumno_actual = $DB->get_record('alumnos_data_patroller', ['id' => $student_id, 'id_materia' => $course->id], 'calificacion_alumno, id_alumno');
-    
+
             // Si la calificación actual es diferente de la nueva o si es vacía, actualiza
             if ($alumno_actual->calificacion_alumno != $calificacion) {
                 if ($calificacion === '') {
@@ -151,26 +151,26 @@ function show_students_commits_table($context, $course, $plugin_instance)
                     $DB->set_field('alumnos_data_patroller', 'calificacion_alumno', $calificacion, ['id' => $student_id, 'id_materia' => $course->id]);
                 }
                 $cambio_datos = true;
-    
+
                 // Obtener el elemento de calificación en Moodle Gradebook
                 $resultado = $DB->get_record('grade_items', ['courseid' => $course->id, 'itemname' => $plugin_instance->name]);
-    
+
                 $grade = new stdClass();
                 $grade->userid = $alumno_actual->id_alumno;
                 $grade->rawgrade = $calificacion === '' ? null : $calificacion; // Asigna null si la calificación está vacía
-    
+
                 $source = 'mod/pluginpatroller';
                 $courseid = $resultado->courseid;
                 $itemtype = $resultado->itemtype;
                 $itemmodule = $resultado->itemmodule;
                 $iteminstance = $resultado->iteminstance;
                 $itemnumber = $resultado->itemnumber;
-    
+
                 // Actualiza la calificación en Moodle Gradebook
                 grade_update($source, $courseid, $itemtype, $itemmodule, $iteminstance, $itemnumber, $grade);
             }
         }
-    
+
         // Redirigir si se hicieron cambios
         if ($cambio_datos) {
             redirect(new moodle_url('/mod/pluginpatroller/view.php', array('id' => $context->instanceid, 'tab' => 'tab3')), '', 0);
